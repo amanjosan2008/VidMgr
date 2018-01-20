@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-# VLC define fix location, over the top, window size, volume
-# "Move All Files" from a dir to another Dir
-# Remove Entries from Dir List
 
 import vlc
 import os,sys
@@ -19,6 +16,10 @@ root = Tk()
 array = []
 MODES = []
 global song
+global d
+global m
+
+
 
 # Populate Directory List
 array = [line.rstrip('\n') for line in open('dirlist.ini')]
@@ -32,9 +33,12 @@ def browse():
     global current
     playlist = []
     current = 0
-    #currdir = os.getcwd()
-    currdir = "/data/.folder/"
-    dir = filedialog.askdirectory(parent=root, initialdir=currdir, title='Please select a directory')
+    d = 0
+    m = 0
+    try:
+        dir = filedialog.askdirectory(parent=root, initialdir='/data/.folder/', title='Please select a directory')
+    except:
+        dir = filedialog.askdirectory(parent=root, initialdir=os.getcwd(), title='Please select a directory')
     en.delete(0,END)
     en.insert(0,dir)
     for filename in os.listdir(en.get()):
@@ -48,6 +52,12 @@ def plist():
     else:
         for i in range(len(playlist)):
             listbox.insert(END, playlist[i])
+
+def stats():
+    listbox.insert(END, "Initial Count: "+str(len(playlist)))
+    listbox.insert(END, "Current Count: "+str(len(playlist)))
+    listbox.insert(END, "Deleted: "+str(m))
+    listbox.insert(END, "Moved: "+str(d))
 
 def play(delta):
     global current
@@ -64,6 +74,7 @@ def move():
         try:
             shutil.move(playlist[current], v.get())
             listbox.insert(END, "Moved: "+playlist[current]+" => "+v.get())
+            m += 1
             play(+1)
         except shutil.Error:
             listbox.insert(END, "Error: "+(playlist[current]).split('/')[-1]+": already exists at destination: "+v.get())
@@ -73,6 +84,7 @@ def move():
 def delete():
     send2trash(playlist[current])
     listbox.insert(END, "Deleted: "+playlist[current])
+    d += 1
     play(+1)
 
 def deleteall():
@@ -81,6 +93,7 @@ def deleteall():
          try:
              send2trash(playlist[i])
              listbox.insert(END, " -  "+playlist[i])
+             d += 1
          except:
              listbox.insert(END, " -  "+"Already Deleted: "+playlist[i])
 
@@ -92,8 +105,10 @@ def exit():
     sys.exit()
 
 def browse2():
-    currdir = "/data/.folder/"
-    dir = filedialog.askdirectory(parent=root, initialdir=currdir, title='Please select a directory')
+    try:
+        dir = filedialog.askdirectory(parent=root, initialdir='/data/.folder/', title='Please select a directory')
+    except:
+        dir = filedialog.askdirectory(parent=root, initialdir=os.getcwd(), title='Please select a directory')    
     en3.delete(0,END)
     en3.insert(0,dir)
 
@@ -114,6 +129,7 @@ Button(root, text='Previous', command=lambda: play(-1)).grid(row=0, column=2, ro
 Button(root, text='Next', command=lambda: play(+1)).grid(row=0, column=3, rowspan=1, columnspan=1)
 Button(root, text='Move', command=lambda: move()).grid(row=0, column=4, rowspan=1, columnspan=1)
 Button(root, text='List', command=lambda: plist()).grid(row=0, column=5, rowspan=1, columnspan=1)
+Button(root, text='Stats', command=lambda: stats()).grid(row=0, column=5, rowspan=1, columnspan=1)
 Button(root, text='Delete', command=lambda: delete()).grid(row=0, column=6, rowspan=1, columnspan=1)
 Button(root, text='Delete All', command=lambda: deleteall()).grid(row=0, column=7, rowspan=1, columnspan=1)
 Button(root, text='Clear', command=lambda: clear()).grid(row=0, column=8, rowspan=1, columnspan=1)
@@ -126,7 +142,10 @@ en.focus_set()
 
 # Directory buttons
 v = StringVar()
-v.set(MODES[0][1]) # initialize
+try:
+    v.set(MODES[0][1]) # initialize
+except:
+    pass
 i = 3
 for text, mode in MODES:
     b = Radiobutton(root, text=text, variable=v, value=mode)
