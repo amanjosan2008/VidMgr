@@ -13,13 +13,9 @@ from send2trash import send2trash
 root = Tk()
 
 # Variables
-array = []
-MODES = []
-global song
-global d
-global m
-
-
+array,playlist,MODES = [],[],[]
+#global song
+m,d = 0,0
 
 # Populate Directory List
 array = [line.rstrip('\n') for line in open('dirlist.ini')]
@@ -29,12 +25,9 @@ for i in range(len(array)):
 
 # Various Functions
 def browse():
-    global playlist
-    global current
+    global playlist, current, d, m
     playlist = []
-    current = 0
-    d = 0
-    m = 0
+    current,d,m = 0,0,0
     try:
         dir = filedialog.askdirectory(parent=root, initialdir='/data/.folder/', title='Please select a directory')
     except:
@@ -47,17 +40,18 @@ def browse():
     listbox.insert(END, "Total no of Files: "+str(len(playlist)))
 
 def plist():
-    if (len(playlist)==0):
+    count = [name for name in os.listdir(en.get()) if os.path.isfile(os.path.join(en.get(), name))]
+    if (len(count)==0):
         listbox.insert(END, "Error: No Files in Directory")
     else:
-        for i in range(len(playlist)):
-            listbox.insert(END, playlist[i])
+        for i in range(len(count)):
+            listbox.insert(END, count[i])
 
 def stats():
     listbox.insert(END, "Initial Count: "+str(len(playlist)))
-    listbox.insert(END, "Current Count: "+str(len(playlist)))
-    listbox.insert(END, "Deleted: "+str(m))
-    listbox.insert(END, "Moved: "+str(d))
+    listbox.insert(END, "Current Count: "+str(len([name for name in os.listdir(en.get()) if os.path.isfile(os.path.join(en.get(), name))])))
+    listbox.insert(END, "Deleted: "+str(d))
+    listbox.insert(END, "Moved: "+str(m))
 
 def play(delta):
     global current
@@ -66,24 +60,34 @@ def play(delta):
         return
     current += delta
     song = 'vlc "%s"' %playlist[current]
-    listbox.insert(END, str(current+1)+": "+song)
-    subprocess.Popen(song, shell=True)
+    if os.path.isfile(playlist[current]):
+        listbox.insert(END, str(current+1)+": "+song)
+        subprocess.Popen(song, shell=True)
+    else:
+        listbox.insert(END, "Error: File not found: "+(playlist[current]).split('/')[-1])
 
 def move():
     if os.path.isdir(v.get()):
         try:
-            shutil.move(playlist[current], v.get())
-            listbox.insert(END, "Moved: "+playlist[current]+" => "+v.get())
-            m += 1
-            play(+1)
+            if os.path.isfile(playlist[current]):
+                shutil.move(playlist[current], v.get())
+                listbox.insert(END, "Moved: "+playlist[current]+" => "+v.get())
+                global m
+                m += 1
+                play(+1)
+            else:
+                listbox.insert(END, "Error: Source file does not exist: "+(playlist[current]).split('/')[-1])
         except shutil.Error:
             listbox.insert(END, "Error: "+(playlist[current]).split('/')[-1]+": already exists at destination: "+v.get())
+        except FileNotFoundError:
+            listbox.insert(END, "Error: File not found: "+(playlist[current]).split('/')[-1])
     else:
         listbox.insert(END, "Error: Directory does not exist: "+v.get())
 
 def delete():
     send2trash(playlist[current])
     listbox.insert(END, "Deleted: "+playlist[current])
+    global d
     d += 1
     play(+1)
 
@@ -93,6 +97,7 @@ def deleteall():
          try:
              send2trash(playlist[i])
              listbox.insert(END, " -  "+playlist[i])
+             global d
              d += 1
          except:
              listbox.insert(END, " -  "+"Already Deleted: "+playlist[i])
@@ -121,6 +126,25 @@ def save():
     else:
         listbox.insert(END, "Error: Directory/Name not selected")
 
+def delentry():
+    f = open('dirlist.ini','r')
+    l = f.readlines()
+    if en4.get():
+        n = int(en4.get())-1
+    else:
+        listbox.insert(END, "Error: Number not entered")
+        return
+    try:
+        listbox.insert(END, "Removing Listed Directory: " + l[n])
+        line = l[0:n] + l[n+1:]
+        f.close()
+        f2 = open('dirlist.ini','w')
+        for i in line:
+            f2.write(i)
+        f2.close()
+    except IndexError:
+        listbox.insert(END, "Error: Invalid Number Entered")
+
 
 # Buttons Config:
 Button(root, text="Browse", command=browse).grid(row=0, column=0, rowspan=1, columnspan=1)
@@ -129,11 +153,11 @@ Button(root, text='Previous', command=lambda: play(-1)).grid(row=0, column=2, ro
 Button(root, text='Next', command=lambda: play(+1)).grid(row=0, column=3, rowspan=1, columnspan=1)
 Button(root, text='Move', command=lambda: move()).grid(row=0, column=4, rowspan=1, columnspan=1)
 Button(root, text='List', command=lambda: plist()).grid(row=0, column=5, rowspan=1, columnspan=1)
-Button(root, text='Stats', command=lambda: stats()).grid(row=0, column=5, rowspan=1, columnspan=1)
-Button(root, text='Delete', command=lambda: delete()).grid(row=0, column=6, rowspan=1, columnspan=1)
-Button(root, text='Delete All', command=lambda: deleteall()).grid(row=0, column=7, rowspan=1, columnspan=1)
-Button(root, text='Clear', command=lambda: clear()).grid(row=0, column=8, rowspan=1, columnspan=1)
-Button(root, text='Quit', command=exit).grid(row=0, column=9, rowspan=1, columnspan=1)
+Button(root, text='Stats', command=lambda: stats()).grid(row=0, column=6, rowspan=1, columnspan=1)
+Button(root, text='Delete', command=lambda: delete()).grid(row=0, column=7, rowspan=1, columnspan=1)
+Button(root, text='Delete All', command=lambda: deleteall()).grid(row=0, column=8, rowspan=1, columnspan=1)
+Button(root, text='Clear', command=lambda: clear()).grid(row=0, column=9, rowspan=1, columnspan=1)
+Button(root, text='Quit', command=exit).grid(row=0, column=10, rowspan=1, columnspan=1)
 
 # Browse Entry Box
 en = Entry(root, width=60)
@@ -144,13 +168,13 @@ en.focus_set()
 v = StringVar()
 try:
     v.set(MODES[0][1]) # initialize
+    i = 3
+    for text, mode in MODES:
+        b = Radiobutton(root, text=text, variable=v, value=mode)
+        b.grid(row=i, column=0, rowspan=1, columnspan=1,sticky=W)
+        i += 1
 except:
     pass
-i = 3
-for text, mode in MODES:
-    b = Radiobutton(root, text=text, variable=v, value=mode)
-    b.grid(row=i, column=0, rowspan=1, columnspan=1,sticky=W)
-    i += 1
 
 # Output Logs Box
 listbox = Listbox(root, height=20, width=70)
@@ -161,27 +185,32 @@ listbox.grid(row=3, column=1, rowspan=12, columnspan=9)
 listbox.insert(END, "Ready, Log Output: ")
 
 # Validate Directories
-for i in range(len(MODES)):
-    if os.path.exists(MODES[i][1]):
-        pass
-    else:
-        listbox.insert(END, "Error: Directory does not exist: "+MODES[i][0]+" - "+MODES[i][1])
+try: 
+    for i in range(len(MODES)):
+        if os.path.exists(MODES[i][1]):
+            pass
+        else:
+            listbox.insert(END, "Error: Directory does not exist: "+MODES[i][0]+" - "+MODES[i][1])
+except:
+    pass
 
 #Save Directory list Section
-
 Label(root, text="Insert Directory to Side Panel:").grid(row=15, column=1,rowspan=1, columnspan=8)
 
 en2 = Entry(root, width=20)
 en2.grid(row=16, column=1, rowspan=1, columnspan=8, sticky=W)
-en2.focus_set()
 
 en3 = Entry(root, width=40)
 en3.grid(row=16, column=2, rowspan=1, columnspan=8, sticky=W)
-en3.focus_set()
 
 Button(root, text="Browse", command=browse2).grid(row=16, column=7, rowspan=1, columnspan=1)
 Button(root, text="Save", command=save).grid(row=16, column=8, rowspan=1, columnspan=1)
 
+en4 = Entry(root, width=10)
+en4.grid(row=18, column=1, rowspan=1, columnspan=1, sticky=W)
+
+Button(root, text="Del Entry", command=lambda: delentry()).grid(row=18, column=2, rowspan=1, columnspan=1)
 
 root.geometry('800x600')
 root.mainloop()
+
