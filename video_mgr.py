@@ -25,19 +25,22 @@ for i in range(len(array)):
 
 # Various Functions
 def browse():
-    global playlist, current, d, m
-    playlist = []
-    current,d,m = 0,0,0
     try:
-        dir = filedialog.askdirectory(parent=root, initialdir='/data/.folder/', title='Please select a directory')
-    except:
-        dir = filedialog.askdirectory(parent=root, initialdir=os.getcwd(), title='Please select a directory')
-    en.delete(0,END)
-    en.insert(0,dir)
-    for filename in os.listdir(en.get()):
-            if os.path.isfile(os.path.join(en.get(), filename)):
-                playlist.append(os.path.join(en.get(), filename))
-    listbox.insert(END, "Total no of Files: "+str(len(playlist)))
+        global playlist, current, d, m
+        playlist = []
+        current,d,m = 0,0,0
+        try:
+            dir = filedialog.askdirectory(parent=root, initialdir='/data/.folder/', title='Please select a directory')
+        except:
+            dir = filedialog.askdirectory(parent=root, initialdir=os.getcwd(), title='Please select a directory')
+        en.delete(0,END)
+        en.insert(0,dir)
+        for filename in os.listdir(en.get()):
+                if os.path.isfile(os.path.join(en.get(), filename)):
+                    playlist.append(os.path.join(en.get(), filename))
+        listbox.insert(END, "Total no of Files: "+str(len(playlist)))
+    except FileNotFoundError:
+        listbox.insert(END, "Error: Directory not selected")
 
 def plist():
     count = [name for name in os.listdir(en.get()) if os.path.isfile(os.path.join(en.get(), name))]
@@ -111,7 +114,7 @@ def exit():
 
 def browse2():
     try:
-        dir = filedialog.askdirectory(parent=root, initialdir='/data/.folder/', title='Please select a directory')
+        dir = filedialog.askdirectory(parent=root, initialdir='/media/system/Data/Vids/', title='Please select a directory')
     except:
         dir = filedialog.askdirectory(parent=root, initialdir=os.getcwd(), title='Please select a directory')    
     en3.delete(0,END)
