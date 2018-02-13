@@ -1,4 +1,7 @@
 # Video-Manager
+ Application to manage huge video collection 
+ 
+![](main.png)
 
 Pending Items
  - Integrate VLC Window in the Main program window
