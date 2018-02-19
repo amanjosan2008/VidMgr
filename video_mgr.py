@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-# VLC define fix location, Over the top, Window size, Volume
-# "Move All Files" from a dir to another Dir
 
 import vlc
 import os,sys
@@ -53,7 +51,7 @@ try:
 
     def openfolder():
         if en.get():
-            path = 'nautilus %s' %en.get()
+            path = 'nautilus "%s"' %en.get()
             subprocess.Popen(path, shell=True)
         else:
             listbox.insert(END, "Error: Directory not selected")
@@ -111,6 +109,19 @@ try:
                     listbox.insert(END, "Error: "+(playlist[current]).split('/')[-1]+": already exists at destination: "+v.get())
                 except FileNotFoundError:
                     listbox.insert(END, "Error: File not found: "+(playlist[current]).split('/')[-1])
+            else:
+                listbox.insert(END, "Error: Directory does not exist: "+v.get())
+        else:
+            listbox.insert(END, "Error: Directory not selected")
+
+    def movedir():
+        if en.get():
+            if os.path.isdir(v.get()):
+                try:
+                    shutil.move(en.get(), v.get())
+                    listbox.insert(END, "Moved: "+en.get()+" => "+v.get())
+                except shutil.Error:
+                    listbox.insert(END, "Error: "+en.get()+": already exists at destination: "+v.get())
             else:
                 listbox.insert(END, "Error: Directory does not exist: "+v.get())
         else:
@@ -187,12 +198,12 @@ try:
 
 
     # Buttons Config:
-    Button(root, text='Play',     command=lambda: play(0)).grid( row=0, column=1, rowspan=1, columnspan=1)
+    Button(root, text='Play',     command=lambda: play(0)).grid(row=0, column=1, rowspan=1, columnspan=1)
     Button(root, text='Previous', command=lambda: play(-1)).grid(row=0, column=2, rowspan=1, columnspan=1)
     Button(root, text='Next',     command=lambda: play(+1)).grid(row=0, column=3, rowspan=1, columnspan=1)
-    Button(root, text='List',     command=lambda: plist()).grid( row=0, column=4, rowspan=1, columnspan=1)
-    Button(root, text='Stats',    command=lambda: stats()).grid( row=0, column=5, rowspan=1, columnspan=1)
-    Button(root, text='Clear',    command=lambda: clear()).grid( row=0, column=6, rowspan=1, columnspan=1)
+    Button(root, text='List',     command=lambda: plist()).grid(row=0, column=4, rowspan=1, columnspan=1)
+    Button(root, text='Stats',    command=lambda: stats()).grid(row=0, column=5, rowspan=1, columnspan=1)
+    Button(root, text='Clear',    command=lambda: clear()).grid(row=0, column=6, rowspan=1, columnspan=1)
 
     # Browse & Entry Box
     Button(root, text="Browse", command=browse).grid(row=2, column=0, rowspan=1, columnspan=1)
@@ -205,7 +216,7 @@ try:
     v = StringVar()
     try:
         v.set(MODES[0][1]) # initialize
-        i = 3
+        i = 3  # Start Dir List from Row no 3
         for text, mode in MODES:
             b = Radiobutton(root, text=text, variable=v, value=mode)
             b.grid(row=i, column=0, rowspan=1, columnspan=1,sticky=W)
@@ -223,6 +234,7 @@ try:
 
     # Buttons with file operations
     Button(root, text='Move', command=lambda: move()).grid(row=3, column=11, rowspan=1, columnspan=1)
+    Button(root, text='Move Dir', command=lambda: movedir()).grid(row=5, column=11, rowspan=1, columnspan=1)
     Button(root, text='Delete', command=lambda: delete()).grid(row=7, column=11, rowspan=1, columnspan=1)
     Button(root, text='Delete All', command=lambda: deleteall()).grid(row=11, column=11, rowspan=1, columnspan=1)
     Button(root, text='Quit', command=exit).grid(row=19, column=11, rowspan=1, columnspan=1)
@@ -255,6 +267,10 @@ try:
     Button(root, text="Del Entry", command=lambda: delentry()).grid(row=18, column=2, rowspan=1, columnspan=1)
 
     root.geometry('800x600')
+    root.title("Video Collection Manager")
+
+    img = PhotoImage(file='icon.png')
+    root.tk.call('wm', 'iconphoto', root._w, img)
     root.mainloop()
 
 except:
