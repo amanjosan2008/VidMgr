@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 
-import vlc
+#import vlc
 import os,sys
 import time
-from tkinter import Label, Tk, Frame, Button, messagebox, StringVar, Radiobutton, filedialog, Entry
-from tkinter import *
-import tkinter
+try:
+    from tkinter import Label, Tk, Frame, Button, messagebox, StringVar, Radiobutton, filedialog, Entry
+    from tkinter import *
+    import tkinter
+except:
+    from Tkinter import * 
 import subprocess
 import shutil
 from send2trash import send2trash
@@ -274,9 +277,9 @@ try:
     root.mainloop()
 
 except:
-    print("Error:", sys.exc_info()[0])
+    print("Error:", sys.exc_info())
     f = open('vigmgr_error.log', 'a')
-    f.write(str(sys.exc_info()[0])+"\r")
+    f.write(str(sys.exc_info())+"\r")
     f.close()
     sys.exit()
 
