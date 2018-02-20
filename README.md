@@ -19,3 +19,4 @@ Pending Actions List:
  - Show File Size for all operations
  - Upload Icon.png file
  - Include Directory Number in Sidebar Text
+ - Upload latest, Clean screenshot with logs for list, stats, move, delete operations.
