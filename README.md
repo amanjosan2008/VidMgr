@@ -1,4 +1,4 @@
-# Video-Manager
+# Video Collection Manager
  Application to manage huge video collection 
  
  This App will allow you to:
@@ -15,6 +15,4 @@
 
 Pending Actions List:
  - Integrate VLC Window in the Main program window
- - VLC define fix location, Over the top, Window size, Volume
- - Show File Size for all operations
  - Include Directory Number in Sidebar Text
