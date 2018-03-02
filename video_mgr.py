@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
-# Fix Button Sizes
-# Separate Window for Directory Operations
+# Keyboard Events Capture to play, next, delete
+# Integrate VLC Window in main Window
+# Add Icon to all Buttons
+# Busy => Hourglass & in Ext Doctor also
 
 import os,sys
 import time
-try:
-    from tkinter import Label, Tk, Frame, Button, messagebox, StringVar, Radiobutton, filedialog, Entry
-    from tkinter import *
-    import tkinter
-except:
-    from Tkinter import *
+from tkinter import Label, Tk, Frame, Button, messagebox, StringVar, Radiobutton, filedialog, Entry, messagebox
+from tkinter import *
+import tkinter
 import subprocess
 import shutil
 from send2trash import send2trash
@@ -122,6 +121,7 @@ try:
                     if os.path.isfile(playlist[current]):
                         shutil.move(playlist[current], v.get())
                         lb("Moved: "+playlist[current]+" => "+v.get())
+                        lb("")
                         global m
                         m += 1
                         play(+1)
@@ -155,6 +155,7 @@ try:
         if en.get():
             send2trash(playlist[current])
             lb("Deleted: "+playlist[current])
+            lb("")
             global d
             d += 1
             play(+1)
@@ -164,15 +165,19 @@ try:
 
     def deleteall():
         if en.get():
-            lb("Deleted All files: ")
-            for i in range(len(playlist)):
-                 try:
-                     send2trash(playlist[i])
-                     lb(" -  "+playlist[i])
-                     global d
-                     d += 1
-                 except:
-                     lb(" -  "+"Already Deleted: "+playlist[i])
+            res = messagebox.askyesno('Confirmation','Do you want to Delete all files?')
+            if res:
+                lb("Deleted All files: ")
+                for i in range(len(playlist)):
+                     try:
+                         send2trash(playlist[i])
+                         lb(" -  "+playlist[i])
+                         global d
+                         d += 1
+                     except:
+                         lb(" -  "+"Already Deleted: "+playlist[i])
+            else:
+                lb("Info: Operation to delete all files cancelled")
         else:
             lb("Error: Directory not selected")
         lb("")
@@ -238,26 +243,50 @@ try:
             lb("Error: Invalid Number Entered")
         lb("")
 
+    #Save Directory list Section
+    def dirlist():
+        win1 = tkinter.Toplevel()
+        Label(win1, text="Insert Directory").grid(row=0, column=0, rowspan=1, columnspan=8)
+        
+        global en2, en3, en4
+        en2 = tkinter.Entry(win1, width=10)
+        en2.grid(row=1, column=0, rowspan=1, columnspan=1, sticky=W)
+
+        en3 = tkinter.Entry(win1, width=40)
+        en3.grid(row=1, column=1, rowspan=1, columnspan=4, sticky=W)
+
+        Button(win1, text="Browse", command=browse2).grid(row=1, column=5, rowspan=1, columnspan=1, ipadx=10)
+        Button(win1, text="Save", command=save).grid(row=1, column=6, rowspan=1, columnspan=1, ipadx=10)
+
+        Label(win1, text="Remove Directory").grid(row=2, column=0, rowspan=1, columnspan=8)
+        en4 = tkinter.Entry(win1, width=10)
+        en4.grid(row=3, column=0, rowspan=1, columnspan=1, sticky=W)
+
+        Button(win1, text="Del Entry", command=lambda: delentry()).grid(row=3, column=1, rowspan=1, columnspan=1, ipadx=10)
+        Button(win1, text='Quit', command=win1.destroy).grid(row=3, column=6, rowspan=1, columnspan=1, ipadx=15)
+
     # Buttons Config:
-    Button(root, text='Play',  command=lambda: play(0)).grid(row=0, column=1, rowspan=1, columnspan=1)
-    Button(root, text='Prev', command=lambda: play(-1)).grid(row=0, column=2, rowspan=1, columnspan=1)
-    Button(root, text='Next', command=lambda: play(+1)).grid(row=0, column=3, rowspan=1, columnspan=1)
-    Button(root, text='List',  command=lambda: ls_dir()).grid(row=0, column=4, rowspan=1, columnspan=1)
-    Button(root, text='Stats', command=lambda: stats()).grid(row=0, column=5, rowspan=1, columnspan=1)
-    Button(root, text='Clear', command=lambda: clear()).grid(row=0, column=6, rowspan=1, columnspan=1)
+    Button(root, text='Play',  command=lambda: play(0)).grid(row=0, column=1, rowspan=1, columnspan=1, ipadx=10)
+    Button(root, text='Prev', command=lambda: play(-1)).grid(row=0, column=2, rowspan=1, columnspan=1, ipadx=10)
+    Button(root, text='Next', command=lambda: play(+1)).grid(row=0, column=3, rowspan=1, columnspan=1, ipadx=10)
+    Button(root, text='List', command=lambda: ls_dir()).grid(row=0, column=4, rowspan=1, columnspan=1, ipadx=10)
+    Button(root, text='Stats', command=lambda: stats()).grid(row=0, column=5, rowspan=1, columnspan=1, ipadx=10)
+    Button(root, text='Clear', command=lambda: clear()).grid(row=0, column=6, rowspan=1, columnspan=1, ipadx=10)
 
     # Browse & Entry Box
-    Button(root, text="Browse", command=browse).grid(row=2, column=0, rowspan=1, columnspan=1)
-    en = Entry(root, width=60)
-    en.grid(row=2, column=1, rowspan=1, columnspan=8, sticky=W)
+    Button(root, text="Browse", command=browse).grid(row=1, column=1, rowspan=1, columnspan=1, ipadx=10)
+    en = Entry(root)
+    en.grid(row=1, column=2, rowspan=1, columnspan=8, sticky=W, ipadx=100)
     en.focus_set()
-    Button(root, text="Open", command=openfolder).grid(row=2, column=8, rowspan=1, columnspan=1)
+    Button(root, text="Open", command=openfolder).grid(row=1, column=8, rowspan=1, columnspan=1, ipadx=10)
 
     # Directory buttons
     v = StringVar()
     try:
-        v.set(MODES[0][1]) # initialize
-        i = 3  # Start Dir List from Row no 3
+        head = Label(root, text="Directory:")
+        head.grid(row=0, column=0, rowspan=1, columnspan=1)
+        v.set(MODES[0][1])  # Initialize
+        i = 1               # Start Dir List from Row no 3
         for text, mode in MODES:
             b = Radiobutton(root, text=text, variable=v, value=mode)
             b.grid(row=i, column=0, rowspan=1, columnspan=1,sticky=W)
@@ -271,19 +300,25 @@ try:
     listbox.xview_scroll(3, "pages")
     listbox.yview_scroll(3, "pages")
     scrollbar.config(command=listbox.yview)
-    scrollbar.grid(row=3, column=10, rowspan=13, columnspan=1, sticky=N, ipady = 148)
     listbox.grid(row=3, column=1, rowspan=12, columnspan=9)
+    scrollbar.grid(row=3, column=10, rowspan=13, columnspan=1, sticky=NW, ipady = 148)
 
     lb("Ready, Log Output:")
     lb("")
 
+    #var = IntVar()
+    #var2 = IntVar()
+
     # Buttons with file operations
-    Button(root, text='Move', command=lambda: move()).grid(row=3, column=13, rowspan=1, columnspan=1)
-    Button(root, text='Move Dir', command=lambda: movedir()).grid(row=5, column=13, rowspan=1, columnspan=1)
-    Button(root, text='Delete', command=lambda: delete()).grid(row=7, column=13, rowspan=1, columnspan=1)
-    Button(root, text='Delete All', command=lambda: deleteall()).grid(row=9, column=13, rowspan=1, columnspan=1)
-    Button(root, text='Delete Dir', command=lambda: del_dir()).grid(row=11, column=13, rowspan=1, columnspan=1)
-    Button(root, text='Quit', command=exit).grid(row=19, column=13, rowspan=1, columnspan=1)
+    Button(root, text='Move', command=lambda: move()).grid(row=3, column=13, rowspan=1, columnspan=1, ipadx=13)
+    Button(root, text='Move Dir', command=lambda: movedir()).grid(row=5, column=13, rowspan=1, columnspan=1, ipadx=3)
+    Button(root, text='Delete', command=lambda: delete()).grid(row=7, column=13, rowspan=1, columnspan=1, ipadx=10)
+    Button(root, text='Del All', command=lambda: deleteall()).grid(row=9, column=13, rowspan=1, columnspan=1, ipadx=10)
+    #Checkbutton(root, text="Confirm", variable=var).grid(row=9, column=14, rowspan=1, columnspan=1)
+    Button(root, text='Del Dir', command=lambda: del_dir()).grid(row=11, column=13, rowspan=1, columnspan=1, ipadx=10)
+    #Checkbutton(root, text="Confirm", variable=var2).grid(row=11, column=14, rowspan=1, columnspan=1)
+    Button(root, text='Edit Dir', command=lambda: dirlist()).grid(row=13, column=13, rowspan=1, columnspan=1, ipadx=9)
+    Button(root, text='Quit', command=exit).grid(row=15, column=13, rowspan=1, columnspan=1, ipadx=17)
 
     # Validate Directories
     try: 
@@ -296,24 +331,7 @@ try:
     except:
         pass
 
-    #Save Directory list Section
-    Label(root, text="Insert Directory to Side Panel:").grid(row=15, column=1,rowspan=1, columnspan=8)
-
-    en2 = Entry(root, width=20)
-    en2.grid(row=16, column=1, rowspan=1, columnspan=8, sticky=W)
-
-    en3 = Entry(root, width=40)
-    en3.grid(row=16, column=2, rowspan=1, columnspan=8, sticky=W)
-
-    Button(root, text="Browse", command=browse2).grid(row=16, column=7, rowspan=1, columnspan=1)
-    Button(root, text="Save", command=save).grid(row=16, column=8, rowspan=1, columnspan=1)
-
-    en4 = Entry(root, width=10)
-    en4.grid(row=18, column=1, rowspan=1, columnspan=1, sticky=W)
-
-    Button(root, text="Del Entry", command=lambda: delentry()).grid(row=18, column=2, rowspan=1, columnspan=1)
-
-    root.geometry('800x520')
+    root.geometry('800x450')
     root.title("Video Collection Manager")
     
     try:
@@ -330,5 +348,4 @@ except:
     f.write(str(sys.exc_info())+"\r")
     f.close()
     sys.exit()
-
 
