@@ -7,7 +7,7 @@
 
 import os,sys
 import time
-from tkinter import Label, Tk, Frame, Button, messagebox, StringVar, Radiobutton, filedialog, Entry, GROOVE, RIDGE, Scrollbar, VERTICAL, Listbox, E, W, N, NW, END, Toplevel, Menu
+from tkinter import Label, Tk, Frame, Button, messagebox, StringVar, Radiobutton, filedialog, Entry, GROOVE, RIDGE, Scrollbar, VERTICAL, Listbox, E, W, N, NW, END, Toplevel, Menu, PhotoImage
 from tkinter.ttk import Progressbar
 import subprocess
 import shutil
@@ -71,9 +71,9 @@ def browse():
         playlist = []
         current,d,m = 0,0,0
         try:
-            dir = filedialog.askdirectory(parent=frame, initialdir='/data/.folder/', title='Please select a directory')
+            dir = filedialog.askdirectory(parent=frame1, initialdir='/data/.folder/', title='Please select a directory')
         except:
-            dir = filedialog.askdirectory(parent=frame, initialdir=os.getcwd(), title='Please select a directory')
+            dir = filedialog.askdirectory(parent=frame1, initialdir=os.getcwd(), title='Please select a directory')
         en.delete(0,END)
         en.insert(0,dir)
         for filename in os.listdir(en.get()):
@@ -245,44 +245,6 @@ def exit():
             proc.kill()
     root.quit()
 
-def browse2():
-    try:
-        dir = filedialog.askdirectory(parent=frame, initialdir='/media/system/Data/Vids/', title='Please select a directory')
-    except:
-        dir = filedialog.askdirectory(parent=frame, initialdir=os.getcwd(), title='Please select a directory')    
-    en3.delete(0,END)
-    en3.insert(0,dir)
-
-def save():
-    if en2.get() and en3.get():
-        f = open('dirlist.ini','a')
-        f.write(en2.get()+"\t"+en3.get()+"\r")
-        f.close()
-        lb("Saved Directory: "+en2.get()+" "+en3.get())
-    else:
-        lb("Error: Directory/Name not selected")
-    lb("")
-
-def delentry():
-    f = open('dirlist.ini','r')
-    l = f.readlines()
-    if en4.get():
-        n = int(en4.get())-1
-    else:
-        lb("Error: Number not entered")
-        return
-    try:
-        lb("Removing Listed Directory: " + l[n])
-        line = l[0:n] + l[n+1:]
-        f.close()
-        f2 = open('dirlist.ini','w')
-        for i in line:
-            f2.write(i)
-        f2.close()
-    except IndexError:
-        lb("Error: Invalid Number Entered")
-    lb("")
-
 def vmode(delta):
     global curr
     if not (0 <= curr + delta < len(MODES)):
@@ -351,6 +313,44 @@ def dirlist():
 
     Button(frame6, text="Del Entry", command=lambda: delentry()).grid(row=3, column=1, rowspan=1, columnspan=1, ipadx=10)
     Button(frame6, text='Quit', command=win1.destroy).grid(row=3, column=6, rowspan=1, columnspan=1, ipadx=15)
+
+def delentry():
+    f = open('dirlist.ini','r')
+    l = f.readlines()
+    if en4.get():
+        n = int(en4.get())-1
+    else:
+        lb("Error: Number not entered")
+        return
+    try:
+        lb("Removing Listed Directory: " + l[n])
+        line = l[0:n] + l[n+1:]
+        f.close()
+        f2 = open('dirlist.ini','w')
+        for i in line:
+            f2.write(i)
+        f2.close()
+    except IndexError:
+        lb("Error: Invalid Number Entered")
+    lb("")
+
+def browse2():
+    try:
+        dir = filedialog.askdirectory(parent=frame, initialdir='/media/system/Data/Vids/', title='Please select a directory')
+    except:
+        dir = filedialog.askdirectory(parent=frame, initialdir=os.getcwd(), title='Please select a directory')    
+    en3.delete(0,END)
+    en3.insert(0,dir)
+
+def save():
+    if en2.get() and en3.get():
+        f = open('dirlist.ini','a')
+        f.write(en2.get()+"\t"+en3.get()+"\r")
+        f.close()
+        lb("Saved Directory: "+en2.get()+" "+en3.get())
+    else:
+        lb("Error: Directory/Name not selected")
+    lb("")
 
 # Menu Configuration
 menu = Menu(frame)
@@ -446,7 +446,8 @@ try:
     img = PhotoImage(file='icon.png')
     root.tk.call('wm', 'iconphoto', root._w, img)
 except:
-    lb("icon.png file not found")
+    lb("Error: icon.png file not found")
 
 root.mainloop()
+
 
