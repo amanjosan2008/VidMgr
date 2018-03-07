@@ -3,9 +3,7 @@
 # Add Icon to all Buttons
 # TopLevel window on top always
 # Display & Live Edit Dirlist.ini file
-# Move to Directory on Click/Select/Button Press
 # Undo last operation Button
-# Delete/All button Borders Red
 
 import os,sys
 import time
@@ -39,7 +37,7 @@ listbox.xview_scroll(3, "pages")
 listbox.yview_scroll(3, "pages")
 scrollbar.config(command=listbox.yview)
 listbox.grid(row=0, column=0)
-scrollbar.grid(row=0, column=1, sticky=E, ipady=310)
+scrollbar.grid(row=0, column=1, sticky=E, ipady=288)
 
 
 # Variables
@@ -230,7 +228,7 @@ def del_dir():
             if os.listdir(en.get()) == []:
                 os.rmdir(en.get())
                 lb("Directory Deleted: "+ en.get())
-            else:            
+            else:
                 lb("Directory not empty: Contains "+ str(len(os.listdir(en.get()))) + " files")
         except FileNotFoundError:
             lb("Error: Directory not found, probably already deleted")
@@ -294,6 +292,7 @@ def vmode(delta):
     curr += delta
     v.set(MODES[curr][1])
 
+# Keyboard Binding related functions
 def playnext(event):
     play(+1)
 
@@ -326,8 +325,8 @@ def about():
 def dirlist():
     win1 = Toplevel()
     win1.title("Directory Operations")
-    #win1.geometry('600x130')
-    #win1.lift()
+    win1.geometry('600x130')
+
     frame5 = Frame(win1, height=800, width=700, bd=3, relief=GROOVE)
     frame5.grid()
 
@@ -335,7 +334,7 @@ def dirlist():
     frame6.grid()
 
     Label(frame5, text="Insert Directory").grid(row=0, column=0, rowspan=1, columnspan=8)
-    
+
     global en2, en3, en4
     en2 = Entry(frame5, width=10)
     en2.grid(row=1, column=0, rowspan=1, columnspan=1, sticky=W)
@@ -358,20 +357,29 @@ menu = Menu(frame)
 
 item1 = Menu(menu, tearoff=0)
 item1.add_command(label='Browse', command=browse)
-item1.add_command(label='Open Dir', command=openfolder)
+item1.add_command(label='Explore', command=openfolder)
 item1.add_separator()
 item1.add_command(label='Exit', command=exit)
 
 item2 = Menu(menu, tearoff=0)
 item2.add_command(label='Edit Dirlist', command=dirlist)
-item2.add_command(label='Clear Logs', command=clear)
-item2.add_command(label='List', command=ls_dir)
-item2.add_command(label='Stats', command=stats)
 item2.add_separator()
-item2.add_command(label='About', command=about)
+item2.add_command(label='Move Dir', command=movedir)
+item2.add_command(label='Delete All', command=deleteall)
+item2.add_command(label='Delete Dir', command=del_dir)
+
+item3 = Menu(menu, tearoff=0)
+item3.add_command(label='List Files', command=ls_dir)
+item3.add_command(label='Stats', command=stats)
+item3.add_command(label='Clear Logs', command=clear)
+
+item4 = Menu(menu, tearoff=0)
+item4.add_command(label='About', command=about)
 
 menu.add_cascade(label='File', menu=item1)
-menu.add_cascade(label='Options', menu=item2)
+menu.add_cascade(label='Operations', menu=item2)
+menu.add_cascade(label='Options', menu=item3)
+menu.add_cascade(label='Help', menu=item4)
 
 root.config(menu=menu)
 
@@ -379,47 +387,34 @@ root.config(menu=menu)
 Button(frame1, text='Play (\u23CE)',  command=lambda: play(0), width=7).grid(row=0, column=0)
 Button(frame1, text='Prev (\u2190)', command=lambda: play(-1), width=7).grid(row=0, column=1)
 Button(frame1, text='Next (\u2192)', command=lambda: play(+1), width=7).grid(row=0, column=2)
-#Button(frame1, text='List', command=lambda: ls_dir(), width=7).grid(row=0, column=3)
-#Button(frame1, text='Stats', command=lambda: stats(), width=7).grid(row=0, column=4)
-#Button(frame1, text='Clear', command=lambda: clear(), width=7).grid(row=0, column=5)
 
-# Browse & Entry Box
-#Button(frame1, text="Browse (B)", command=browse,width=7).grid(row=1, column=0)
+# Entry Box
 en = Entry(frame1)
-en.grid(row=0, column=3, columnspan=4, sticky=W, ipadx=90)
-#en.focus_set()
-#Button(frame1, text="Open", command=openfolder, width=7).grid(row=1, column=5)
-
+en.grid(row=0, column=3, columnspan=4, sticky=W, ipadx=50)
 
 # Directory buttons
 v = StringVar()
-#head = Label(frame2, text="Directory:")
-#head.grid(row=0, column=0, rowspan=1, columnspan=1)
-#try:
-#	v.set(MODES[0][1])              # Initialize
-#except:
-#	lb("Error: No Directories found in Dirlist.ini")
 
 i = 0
-for text, mode in MODES:
-    #b = Radiobutton(frame4, text=str(i)+". "+text, variable=v, value=mode)
-    b = Button(frame4, text=text, textvariable=mode, command=lambda mode=mode: move(mode), width=10)
-    b.grid(row=i, sticky=W)
-    i += 1
+try:
+    for text, mode in MODES:
+        b = Button(frame4, text=text, textvariable=mode, command=lambda mode=mode: move(mode), width=10)
+        b.grid(row=i, sticky=W)
+        i += 1
+except ValueError:
+    lb("Error: Data in Dirlist.ini not correctly formatted")
 
-# Buttons with file operations
-#Button(frame4, text='Move (Z)', command=lambda: move()).grid(row=0, ipadx=2)
-Button(frame4, text='Delete (X)', command=lambda: delete(), width=10).grid(row=i+1)
-Button(frame4, text='Move Dir', command=lambda: movedir(), width=10).grid(row=i+2)
-Button(frame4, text='Del All', command=lambda: deleteall(), width=10).grid(row=i+3)
-Button(frame4, text='Del Dir', command=lambda: del_dir(), width=10).grid(row=i+4)
-#Button(frame4, text='Edit Dir', command=lambda: dirlist(), width=10).grid(row=i+5)
-#Button(frame4, text='Quit', command=exit, width=10).grid(row=i+6)
+if i ==0:
+    lb("Error: No Directories found in Dirlist.ini")
 
+# Buttons with Directory operations
+Button(frame4, text='Delete (X)', command=lambda: delete(), width=10, fg="red").grid(row=i+1)
+#Button(frame4, text='Move Dir', command=lambda: movedir(), width=10, fg="red").grid(row=i+2)
+#Button(frame4, text='Del All', command=lambda: deleteall(), width=10, fg="red").grid(row=i+3)
+#Button(frame4, text='Del Dir', command=lambda: del_dir(), width=10, fg="red").grid(row=i+4)
 
 lb("Ready, Log Output:")
 lb("")
-
 
 # Progress Bar
 bar = Progressbar(frame3, length=450)
@@ -454,11 +449,4 @@ except:
     lb("icon.png file not found")
 
 root.mainloop()
-
-#except:
-#    print("Error:", sys.exc_info())
-#    f = open('vigmgr_error.log', 'a')
-#    f.write(str(sys.exc_info())+"\r")
-#    f.close()
-#    sys.exit()
 
