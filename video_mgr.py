@@ -2,12 +2,11 @@
 # Integrate VLC Window in main Window
 # Add Icon to all Buttons
 # TopLevel window on top always
-# Display & Live Edit Dirlist.ini file
 # Undo last operation Button
 
 import os,sys
 import time
-from tkinter import Label, Tk, Frame, Button, messagebox, StringVar, Radiobutton, filedialog, Entry, GROOVE, RIDGE, Scrollbar, VERTICAL, Listbox, E, W, N, NW, END, Toplevel, Menu, PhotoImage
+from tkinter import Label, Tk, Frame, Button, messagebox, StringVar, Radiobutton, filedialog, Entry, GROOVE, RIDGE, SUNKEN,  Scrollbar, VERTICAL, Listbox, E, W, N, NW, END, Toplevel, Menu, PhotoImage
 from tkinter.ttk import Progressbar
 import subprocess
 import shutil
@@ -24,15 +23,15 @@ frame.grid()
 frame1 = Frame(frame, height=50, width=500, bd=3, relief=GROOVE)
 frame1.grid(row=0, column=0, columnspan=2, sticky=NW)
 
-frame3 = Frame(frame, height=300, width=400, bd=3, relief=GROOVE)
-frame3.grid(row=1, column=0, sticky=N)
+frame2 = Frame(frame, height=300, width=400, bd=3, relief=GROOVE)
+frame2.grid(row=1, column=0, sticky=N)
 
-frame4 = Frame(frame, height=300, width=100, bd=3, relief=GROOVE)
-frame4.grid(row=0, column=1, rowspan=2, sticky=N)
+frame3 = Frame(frame, height=300, width=100, bd=3, relief=GROOVE)
+frame3.grid(row=0, column=1, rowspan=2, sticky=N)
 
 # Output Logs Box
-scrollbar = Scrollbar(frame3, orient=VERTICAL, cursor='sb_v_double_arrow')
-listbox = Listbox(frame3, height=40, width=63, yscrollcommand=scrollbar.set)
+scrollbar = Scrollbar(frame2, orient=VERTICAL, cursor='sb_v_double_arrow')
+listbox = Listbox(frame2, height=40, width=63, yscrollcommand=scrollbar.set)
 listbox.xview_scroll(3, "pages")
 listbox.yview_scroll(3, "pages")
 scrollbar.config(command=listbox.yview)
@@ -147,12 +146,12 @@ def move(mode):
         if os.path.isdir(mode):
             try:
                 if os.path.isfile(playlist[current]):
-                    frame4.config(cursor="watch")
-                    frame4.update()
+                    frame3.config(cursor="watch")
+                    frame3.update()
                     shutil.move(playlist[current], mode)
                     lb("Moved: "+playlist[current]+" => "+mode)
                     lb("")
-                    frame4.config(cursor="")
+                    frame3.config(cursor="")
                     global m
                     m += 1
                     play(+1)
@@ -160,10 +159,10 @@ def move(mode):
                     lb("Error: Source file does not exist: "+(playlist[current]).split('/')[-1])
             except shutil.Error:
                 lb("Error: "+(playlist[current]).split('/')[-1]+": already exists at destination: "+mode)
-                frame4.config(cursor="")
+                frame3.config(cursor="")
             except FileNotFoundError:
                 lb("Error: File not found: "+(playlist[current]).split('/')[-1])
-                frame4.config(cursor="")
+                frame3.config(cursor="")
         else:
             lb("Error: Directory does not exist: "+mode)
     else:
@@ -176,10 +175,10 @@ def movedir():
             res1 = messagebox.askyesno('Confirmation','Do you want to Move all files?')
             if res1:
                 try:
-                    frame4.config(cursor="watch")
-                    frame4.update()
+                    frame3.config(cursor="watch")
+                    frame3.update()
                     shutil.move(en.get(), v.get())
-                    frame4.config(cursor="")
+                    frame3.config(cursor="")
                     lb("Moved: "+en.get()+" => "+v.get())
                 except shutil.Error:
                     lb("Error: "+en.get()+": already exists at destination: "+v.get())
@@ -193,12 +192,15 @@ def movedir():
 
 def delete():
     if en.get():
-        send2trash(playlist[current])
-        lb("Deleted: "+playlist[current])
-        lb("")
-        global d
-        d += 1
-        play(+1)
+        if os.path.isfile(playlist[current]):
+            send2trash(playlist[current])
+            lb("Deleted: "+playlist[current])
+            lb("")
+            global d
+            d += 1
+            play(+1)
+        else:
+            lb("Error: File not found/moved/already deleted")
     else:
         lb("Error: Directory not selected")
     lb("")
@@ -287,52 +289,44 @@ def about():
 def dirlist():
     win1 = Toplevel()
     win1.title("Directory Operations")
-    win1.geometry('600x130')
 
-    frame5 = Frame(win1, height=800, width=700, bd=3, relief=GROOVE)
-    frame5.grid()
+    frame4 = Frame(win1, height=800, width=700, bd=3, relief=GROOVE)
+    frame4.grid()
+    #win1.geometry('600x130')
 
-    frame6 = Frame(win1, height=800, width=700, bd=3, relief=GROOVE)
-    frame6.grid()
+    Label(frame4, text="Directory List:").grid(row=0, columnspan=8)
 
-    Label(frame5, text="Insert Directory").grid(row=0, column=0, rowspan=1, columnspan=8)
-
-    global en2, en3, en4
-    en2 = Entry(frame5, width=10)
-    en2.grid(row=1, column=0, rowspan=1, columnspan=1, sticky=W)
-
-    en3 = Entry(frame5, width=40)
-    en3.grid(row=1, column=1, rowspan=1, columnspan=4, sticky=W)
-
-    Button(frame5, text="Browse", command=browse2).grid(row=1, column=5, rowspan=1, columnspan=1, ipadx=10)
-    Button(frame5, text="Save", command=save).grid(row=1, column=6, rowspan=1, columnspan=1, ipadx=10)
-
-    Label(frame6, text="Remove Directory").grid(row=2, column=0, rowspan=1, columnspan=8)
-    en4 = Entry(frame6, width=10)
-    en4.grid(row=3, column=0, rowspan=1, columnspan=1, sticky=W)
-
-    Button(frame6, text="Del Entry", command=lambda: delentry()).grid(row=3, column=1, rowspan=1, columnspan=1, ipadx=10)
-    Button(frame6, text='Quit', command=win1.destroy).grid(row=3, column=6, rowspan=1, columnspan=1, ipadx=15)
-
-def delentry():
     f = open('dirlist.ini','r')
     l = f.readlines()
-    if en4.get():
-        n = int(en4.get())-1
-    else:
-        lb("Error: Number not entered")
-        return
-    try:
-        lb("Removing Listed Directory: " + l[n])
-        line = l[0:n] + l[n+1:]
-        f.close()
-        f2 = open('dirlist.ini','w')
-        for i in line:
-            f2.write(i)
-        f2.close()
-    except IndexError:
-        lb("Error: Invalid Number Entered")
+    j = 1
+    for i in l:
+        x = i.split('\t')
+        Button(frame4, width=30, text=x[0], relief=SUNKEN).grid(row=j, column=0, sticky=W)
+        Button(frame4, width=60, text=x[1].rstrip(), relief=SUNKEN).grid(row=j, column=1, columnspan=2, sticky=W)
+        Button(frame4, width=5, text="Del", command=lambda j=j-1: delentry(j)).grid(row=j, column=3, sticky=W)
+        j += 1
+
+    global en2,en3
+    en2 = Entry(frame4, width=30)
+    en2.grid(row=j+1,column=0)
+    en3 = Entry(frame4, width=50)
+    en3.grid(row=j+1,column=1)
+    Button(frame4, text="Browse", command=browse2).grid(row=j+1, column=2)
+    Button(frame4, text="Save", command=save).grid(row=j+1, column=3)
+    Button(frame4, text='Quit', command=win1.destroy).grid(row=j+2, column=3)
+
+def delentry(n):
+    f = open('dirlist.ini','r')
+    l = f.readlines()
+    line = l[0:n] + l[n+1:]
+    f.close()
+    f2 = open('dirlist.ini','w')
+    for i in line:
+        f2.write(i)
+    f2.close()
+    lb("Removing Listed Directory: " + l[n].rstrip())
     lb("")
+    messagebox.showinfo('Removed','Entry deleted from Dirlist.ini')
 
 def browse2():
     try:
@@ -347,10 +341,10 @@ def save():
         f = open('dirlist.ini','a')
         f.write(en2.get()+"\t"+en3.get()+"\r")
         f.close()
-        lb("Saved Directory: "+en2.get()+" "+en3.get())
+        lb("Info: Dirlist.ini Entry saved => "+en2.get()+" - "+en3.get())
+        messagebox.showinfo('Saved','Entry saved in Dirlist.ini')
     else:
-        lb("Error: Directory/Name not selected")
-    lb("")
+        messagebox.showerror('Empty','Please Enter data in both columns')
 
 # Menu Configuration
 menu = Menu(frame)
@@ -384,7 +378,7 @@ menu.add_cascade(label='Help', menu=item4)
 root.config(menu=menu)
 
 # Buttons Config:
-Button(frame1, text='Play (\u23CE)',  command=lambda: play(0), width=7).grid(row=0, column=0)
+Button(frame1, text='Play (\u23CE)', command=lambda: play(0), width=7).grid(row=0, column=0)
 Button(frame1, text='Prev (\u2190)', command=lambda: play(-1), width=7).grid(row=0, column=1)
 Button(frame1, text='Next (\u2192)', command=lambda: play(+1), width=7).grid(row=0, column=2)
 
@@ -398,26 +392,23 @@ v = StringVar()
 i = 0
 try:
     for text, mode in MODES:
-        b = Button(frame4, text=text, textvariable=mode, command=lambda mode=mode: move(mode), width=10)
+        b = Button(frame3, text=text, textvariable=mode, command=lambda mode=mode: move(mode), width=10)
         b.grid(row=i, sticky=W)
         i += 1
 except ValueError:
     lb("Error: Data in Dirlist.ini not correctly formatted")
 
-if i ==0:
+if i==0:
     lb("Error: No Directories found in Dirlist.ini")
 
 # Buttons with Directory operations
-Button(frame4, text='Delete (X)', command=lambda: delete(), width=10, fg="red").grid(row=i+1)
-#Button(frame4, text='Move Dir', command=lambda: movedir(), width=10, fg="red").grid(row=i+2)
-#Button(frame4, text='Del All', command=lambda: deleteall(), width=10, fg="red").grid(row=i+3)
-#Button(frame4, text='Del Dir', command=lambda: del_dir(), width=10, fg="red").grid(row=i+4)
+Button(frame3, text='Delete (X)', command=lambda: delete(), width=10, fg="red").grid(row=i+1)
 
 lb("Ready, Log Output:")
 lb("")
 
 # Progress Bar
-bar = Progressbar(frame3, length=450)
+bar = Progressbar(frame2, length=450)
 bar.grid(row=1)
 
 # Validate Directories
@@ -431,7 +422,6 @@ try:
 except:
     pass
 
-#root.geometry('830x450')
 root.title("Video Collection Manager")
 root.bind('<Return>', playcurr)
 root.bind('<Left>', playprev)
