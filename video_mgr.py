@@ -288,6 +288,7 @@ def about():
 #Save Directory list Section
 def dirlist():
     win1 = Toplevel()
+    win1.attributes('-topmost', 'true')
     win1.title("Directory Operations")
 
     frame4 = Frame(win1, height=800, width=700, bd=3, relief=GROOVE)
