@@ -2,7 +2,6 @@
 # Integrate VLC Window in main Window
 # Add Icon to all Buttons
 # Undo last operation Button
-# DelEntry() lb print remove '\t'
 # Restart Menu Item not Working
 
 import os,sys
@@ -367,7 +366,8 @@ def delentry(n):
     for i in line:
         f2.write(i)
     f2.close()
-    lb("Removing Listed Directory: " + l[n].rstrip()+" Restart the App to load Directories")
+    i = l[n].split()
+    lb("Info: Removing Listed Directory: " + i[0]+" - "+i[1]+"; Restart the App to load Directories")
     lb("")
     win1.destroy()
     dirlist()
@@ -385,7 +385,7 @@ def save():
         f = open('dirlist.ini','a')
         f.write(en2.get()+"\t"+en3.get()+"\r")
         f.close()
-        lb("Info: Dirlist.ini Entry saved => "+en2.get()+" - "+en3.get()+" Restart the App to load Directories")
+        lb("Info: Dirlist.ini Entry saved => "+en2.get()+" - "+en3.get()+"; Restart the App to load Directories")
         win1.destroy()
         dirlist()
     else:
@@ -472,7 +472,6 @@ try:
 except:
     pass
 
-#root.geometry('830x450')
 root.title("Video Collection Manager")
 root.bind('<Return>', playcurr)
 root.bind('<Left>', playprev)
