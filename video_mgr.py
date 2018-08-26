@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # Integrate VLC Window in main Window
 # Add Icon to all Buttons
-# Undo last operation Button
 # Restart Menu Item not Working
+# Undo Button for Deleted Files
+# Memory save last location..... Dirlist - Browse
 
 import os,sys
 import time
@@ -13,6 +14,7 @@ import shutil
 from send2trash import send2trash
 import psutil
 import webbrowser
+import path
 
 root = Tk()
 
@@ -32,16 +34,18 @@ frame3.grid(row=0, column=1, rowspan=2, sticky=N)
 
 # Output Logs Box
 scrollbar = Scrollbar(frame2, orient=VERTICAL, cursor='sb_v_double_arrow')
-listbox = Listbox(frame2, height=40, width=63, yscrollcommand=scrollbar.set)
+listbox = Listbox(frame2, height=40, width=73, yscrollcommand=scrollbar.set)
 listbox.xview_scroll(3, "pages")
 listbox.yview_scroll(3, "pages")
 scrollbar.config(command=listbox.yview)
-listbox.grid(row=0, column=0, columnspan=2)
-scrollbar.grid(row=0, column=2, sticky=E, ipady=306)
+listbox.grid(row=0, column=0, columnspan=3)
+scrollbar.grid(row=0, column=3, sticky=E, ipady=345)
 
 # Variables
 array,playlist,MODES = [],[],[]
 m,d,curr = 0,0,0
+loc_mem = 0
+loc_mem2 = 0
 
 # Populate Directory List
 try:
@@ -65,14 +69,19 @@ def lb(text):
 
 # Various Functions
 def browse():
+    global loc_mem
     try:
         global playlist, current, d, m
         playlist = []
         current,d,m = 0,0,0
         try:
-            dir = filedialog.askdirectory(parent=frame1, initialdir='/data/.folder/', title='Please select a directory')
+            if loc_mem:
+                dir = filedialog.askdirectory(parent=frame, initialdir=loc_mem, title='Please select a directory')
+            else:
+                dir = filedialog.askdirectory(parent=frame1, initialdir=path.browse, title='Please select a directory')
         except:
             dir = filedialog.askdirectory(parent=frame1, initialdir=os.getcwd(), title='Please select a directory')
+        loc_mem = dir
         en.delete(0,END)
         en.insert(0,dir)
         for filename in os.listdir(en.get()):
@@ -142,93 +151,135 @@ def play(delta):
         lb("")
 
 def move(mode):
+    global orig_file
+    global new_path
     if en.get():
-        if os.path.isdir(mode):
-            if var.get():
-                res1 = messagebox.askyesno('Confirmation','Do you want to move selected Directory?', parent=frame)
-                if res1:
-                    try:
-                        frame.config(cursor="watch")
-                        frame.update()
-                        shutil.move(en.get(), mode)
-                        frame.config(cursor="")
-                        lb("Info: Directory moved: "+en.get()+" => "+mode)
-                    except shutil.Error:
-                        lb("Error: "+en.get()+": already exists at destination: "+mode)
-                else:
-                    lb("Info: Operation to delete all files cancelled")
-            else:
-                try:
-                    if os.path.isfile(playlist[current]):
-                        frame.config(cursor="watch")
-                        frame.update()
-                        shutil.move(playlist[current], mode)
-                        lb("Moved: "+playlist[current]+" => "+mode)
-                        lb("")
-                        frame.config(cursor="")
-                        global m
-                        m += 1
-                        play(+1)
+        try:
+            if os.path.isdir(mode):
+                if var.get():
+                    res1 = messagebox.askyesno('Confirmation','Do you want to move selected Directory?', parent=frame)
+                    if res1:
+                        try:
+                            frame.config(cursor="watch")
+                            frame.update()
+                            shutil.move(en.get(), mode)
+                            orig_file = en.get()
+                            new_path = mode
+                            frame.config(cursor="")
+                            lb("Info: Directory moved: "+en.get()+" => "+mode)
+                        except shutil.Error:
+                            lb("Error: "+en.get()+": already exists at destination: "+mode)
                     else:
-                        lb("Error: Source file does not exist: "+(playlist[current]).split('/')[-1])
-                except shutil.Error:
-                    lb("Error: "+(playlist[current]).split('/')[-1]+": already exists at destination: "+mode)
-                    frame.config(cursor="")
-                except FileNotFoundError:
-                    lb("Error: File not found: "+(playlist[current]).split('/')[-1])
-                    frame.config(cursor="")
-        else:
-            lb("Error: Directory does not exist: "+mode)
+                        lb("Info: Operation to delete all files cancelled")
+                else:
+                    try:
+                        if os.path.isfile(playlist[current]):
+                            frame.config(cursor="watch")
+                            frame.update()
+                            shutil.move(playlist[current], mode)
+                            orig_file = playlist[current]
+                            new_path = mode
+                            lb("Moved: "+playlist[current]+" => "+mode)
+                            lb("")
+                            frame.config(cursor="")
+                            global m
+                            m += 1
+                            play(+1)
+                        else:
+                            lb("Error: Source file does not exist: "+(playlist[current]).split('/')[-1])
+                    except shutil.Error:
+                        lb("Error: "+(playlist[current]).split('/')[-1]+": already exists at destination: "+mode)
+                        frame.config(cursor="")
+                    except FileNotFoundError:
+                        lb("Error: File not found: "+(playlist[current]).split('/')[-1])
+                        frame.config(cursor="")
+            else:
+                lb("Error: Directory does not exist: "+mode)
+        except NameError:
+            lb("Error: Directory is empty or invalid")
     else:
         lb("Error: Directory not selected")
     lb("")
 
-def movedir():
+def moveto():
+    global orig_file
+    global new_path
+    global loc_mem2
     if en.get():
         try:
             try:
-                mvdir = filedialog.askdirectory(parent=frame, initialdir='/media/system/Data/Vids/', title='Please select a directory')
+                if loc_mem2:
+                    mvdir = filedialog.askdirectory(parent=frame, initialdir=loc_mem2, title='Please select a directory')
+                else:
+                    mvdir = filedialog.askdirectory(parent=frame, initialdir=path.moveto, title='Please select a directory')
             except:
                 mvdir = filedialog.askdirectory(parent=frame, initialdir=os.getcwd(), title='Please select a directory')
+            loc_mem2 = mvdir
             if os.path.isdir(mvdir):
-                try:
-                    if os.path.isfile(playlist[current]):
-                        frame.config(cursor="watch")
-                        frame.update()
-                        shutil.move(playlist[current], mvdir)
-                        lb("Moved: "+playlist[current]+" => "+mvdir)
-                        lb("")
-                        frame.config(cursor="")
-                        global m
-                        m += 1
-                        play(+1)
+                if var.get():
+                    res2 = messagebox.askyesno('Confirmation','Do you want to move selected Directory?', parent=frame)
+                    if res2:
+                        try:
+                            frame.config(cursor="watch")
+                            frame.update()
+                            shutil.move(en.get(), mvdir)
+                            orig_file = en.get()
+                            new_path = mvdir
+                            frame.config(cursor="")
+                            lb("Info: Directory moved: "+en.get()+" => "+mvdir)
+                        except shutil.Error:
+                            lb("Error: "+en.get()+": already exists at destination: "+mvdir)
                     else:
-                        lb("Error: Source file does not exist: "+(playlist[current]).split('/')[-1])
-                except shutil.Error:
-                    lb("Error: "+(playlist[current]).split('/')[-1]+": already exists at destination: "+mvdir)
-                    frame.config(cursor="")
-                except FileNotFoundError:
-                    lb("Error: File not found: "+(playlist[current]).split('/')[-1])
-                    frame.config(cursor="")
+                        lb("Info: Operation to delete all files cancelled")
+                else:
+                    try:
+                        if os.path.isfile(playlist[current]):
+                            frame.config(cursor="watch")
+                            frame.update()
+                            shutil.move(playlist[current], mvdir)
+                            orig_file = playlist[current]
+                            new_path = mvdir
+                            lb("Moved: "+playlist[current]+" => "+mvdir)
+                            lb("")
+                            frame.config(cursor="")
+                            global m
+                            m += 1
+                            play(+1)
+                        else:
+                            lb("Error: Source file does not exist: "+(playlist[current]).split('/')[-1])
+                    except shutil.Error:
+                        lb("Error: "+(playlist[current]).split('/')[-1]+": already exists at destination: "+mvdir)
+                        frame.config(cursor="")
+                    except FileNotFoundError:
+                        lb("Error: File not found: "+(playlist[current]).split('/')[-1])
+                        frame.config(cursor="")
+                    except IndexError:
+                        lb("Error: No file in Directory: " + en.get())
+                        frame.config(cursor="")
             else:
                 lb("Error: Directory does not exist: "+mvdir)
         except TypeError:
             lb("Info: Move Directory operation cancelled by User")
+        except NameError:
+            lb("Error: Directory is empty or invalid")
     else:
         lb("Error: Directory not selected")
     lb("")
 
 def delete():
     if en.get():
-        if os.path.isfile(playlist[current]):
-            send2trash(playlist[current])
-            lb("Deleted: "+playlist[current])
-            lb("")
-            global d
-            d += 1
-            play(+1)
-        else:
-            lb("Error: File not found/moved/already deleted")
+        try:
+            if os.path.isfile(playlist[current]):
+                send2trash(playlist[current])
+                lb("Deleted: "+playlist[current])
+                lb("")
+                global d
+                d += 1
+                play(+1)
+            else:
+                lb("Error: File not found/moved/already deleted:" + playlist[current])
+        except NameError:
+            lb("Error: Directory does not exist or not selected")
     else:
         lb("Error: Directory not selected")
     lb("")
@@ -287,13 +338,31 @@ def vmode(delta):
 def restart():
     root.update()
 
+# orig_file: /home/aman/Desktop/test/python2.py
+# new_path: /home/aman/Desktop/test2/
+def undo():
+    try:
+        name = orig_file.split('/')[-1]
+        path = os.path.join(new_path +'/'+name)
+        orig_dir = os.path.dirname(orig_file)
+        if os.path.isfile(path):
+            if os.path.isdir(orig_dir):
+                shutil.move(path,orig_dir)
+                lb("Undo: Moved file: "+name+" to Dir "+orig_dir)
+            else:
+                lb("Error: Source Dir does not exist: "+ orig_dir)
+        else:
+            lb("Error: File not found: "+ name + "in Dir: " + path)
+    except NameError:
+        lb("Error: No file moved, Cannot use Undo function")
+
 # Keyboard Binding related functions
 def playnext(event):
     play(+1)
 
 def playprev(event):
     play(-1)
-    
+
 def playcurr(event):
     play(0)
 
@@ -301,14 +370,14 @@ def br(event):
     browse()
 
 #def mv(event):
-#    movedir()
+#    moveto()
 
 def delt(event):
     delete()
 
 def modeup(event):
     vmode(-1)
-    
+
 def modedown(event):
     vmode(+1)
 
@@ -374,7 +443,7 @@ def delentry(n):
 
 def browse2():
     try:
-        dir = filedialog.askdirectory(parent=frame4, initialdir='/media/system/Data/Vids/', title='Please select a directory')
+        dir = filedialog.askdirectory(parent=frame4, initialdir=path.browse2, title='Please select a directory')
     except:
         dir = filedialog.askdirectory(parent=frame4, initialdir=os.getcwd(), title='Please select a directory')
     en3.delete(0,END)
@@ -429,7 +498,7 @@ Button(frame1, text='Next (\u2192)', command=lambda: play(+1), width=7).grid(row
 
 # Entry Box
 en = Entry(frame1)
-en.grid(row=0, column=3, columnspan=4, sticky=W, ipadx=50)
+en.grid(row=0, column=3, columnspan=4, sticky=W, ipadx=90)
 
 # Directory buttons
 v = StringVar()
@@ -447,22 +516,25 @@ if i==0:
     lb("Error: No Directories found in Dirlist.ini")
 
 # Buttons with Directory operations
-Button(frame3, text='Move to ..', command=movedir, width=10).grid(row=i+1)
+Button(frame3, text='Move to ..', command=moveto, width=10).grid(row=i+1)
 Button(frame3, text='Delete (X)', command=lambda: delete(), width=10, fg="red").grid(row=i+2)
 
 lb("Ready, Log Output:")
 lb("")
 
 # Progress Bar
-bar = ttk.Progressbar(frame2, length=420)
+bar = ttk.Progressbar(frame2, length=430)
 bar.grid(row=1,column=0)
 
 # Move Dir Checkbox
 var = IntVar()
 Checkbutton(frame2, text="Move Dir", variable=var).grid(row=1, column=1)
 
+# Undo Button
+Button(frame2, text="Undo", command=undo).grid(row=1, column=2)
+
 # Validate Directories
-try: 
+try:
     for i in range(len(MODES)):
         if os.path.exists(MODES[i][1]):
             pass
@@ -487,5 +559,3 @@ except:
     lb("Error: icon.png file not found")
 
 root.mainloop()
-
-
