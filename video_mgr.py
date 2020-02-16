@@ -503,11 +503,17 @@ en.grid(row=0, column=3, columnspan=4, sticky=W, ipadx=90)
 # Directory buttons
 v = StringVar()
 
-i = 0
+i = 0    # no of Row for the buttons in column no 4
+j = 4    # no of Column (4 or 5)
+k = 0    # no of Row for the buttons in column no 5
+l = 25   # no of buttons for next column
 try:
     for text, mode in MODES:
         b = Button(frame3, text=text, textvariable=mode, command=lambda mode=mode: move(mode), width=10)
-        b.grid(row=i, sticky=W)
+        b.grid(row=i, column=j, sticky=W)
+        if i > l:
+            b.grid(row=k, column=j+1, sticky=W)
+            k += 1
         i += 1
 except ValueError:
     lb("Error: Data in Dirlist.ini not correctly formatted")
@@ -516,8 +522,12 @@ if i==0:
     lb("Error: No Directories found in Dirlist.ini")
 
 # Buttons with Directory operations
-Button(frame3, text='Move to ..', command=moveto, width=10).grid(row=i+1)
-Button(frame3, text='Delete (X)', command=lambda: delete(), width=10, fg="red").grid(row=i+2)
+if i <= l:
+    Button(frame3, text='Move to ..', command=moveto, width=10).grid(row=i+1)
+    Button(frame3, text='Delete (X)', command=lambda: delete(), width=10, fg="red").grid(row=i+2)
+else:
+    Button(frame3, text='Move to ..', command=moveto, width=10).grid(row=k, column=j+1)
+    Button(frame3, text='Delete (X)', command=lambda: delete(), width=10, fg="red").grid(row=k+1, column=j+1)
 
 lb("Ready, Log Output:")
 lb("")
@@ -535,11 +545,11 @@ Button(frame2, text="Undo", command=undo).grid(row=1, column=2)
 
 # Validate Directories
 try:
-    for i in range(len(MODES)):
-        if os.path.exists(MODES[i][1]):
+    for k in range(len(MODES)):
+        if os.path.exists(MODES[k][1]):
             pass
         else:
-            lb("Error: Directory does not exist: "+MODES[i][0]+" - "+MODES[i][1])
+            lb("Error: Directory does not exist: "+MODES[k][0]+" - "+MODES[k][1])
     lb("")
 except:
     pass
