@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # Integrate VLC Window in main Window
-# Add Icon to all Buttons
-# Restart Menu Item not Working
 # Undo Button for Deleted Files
-# Memory save last location..... Dirlist - Browse
+# Memory save last location...... Dirlist - Browse
+# Delete Empty Folders Function update
 
-import os,sys
+import os
+import sys
 import time
 from tkinter import *
 from tkinter import ttk, filedialog, messagebox
@@ -22,24 +22,29 @@ root = Tk()
 frame = Frame(root, height=800, width=700, bd=3, relief=RIDGE)
 frame.grid()
 
-# Sub Frames
+# Sub Frame for Play, Prev, Next Buttons
 frame1 = Frame(frame, height=50, width=500, bd=3, relief=GROOVE)
 frame1.grid(row=0, column=0, columnspan=2, sticky=NW)
 
+# For Listbox, Progressbar, MoveDir Checkbox, Undo Button
 frame2 = Frame(frame, height=300, width=400, bd=3, relief=GROOVE)
 frame2.grid(row=1, column=0, sticky=N)
 
+# For Right side Buttons
 frame3 = Frame(frame, height=300, width=100, bd=3, relief=GROOVE)
 frame3.grid(row=0, column=1, rowspan=2, sticky=N)
 
 # Output Logs Box
-scrollbar = Scrollbar(frame2, orient=VERTICAL, cursor='sb_v_double_arrow')
-listbox = Listbox(frame2, height=40, width=73, yscrollcommand=scrollbar.set)
-listbox.xview_scroll(3, "pages")
+scrollbarv = Scrollbar(frame2, orient=VERTICAL, cursor='sb_v_double_arrow')
+scrollbarh = Scrollbar(frame2, orient=HORIZONTAL, cursor='sb_h_double_arrow')
+listbox = Listbox(frame2, height=40, width=73, yscrollcommand=scrollbarv.set, xscrollcommand=scrollbarh.set)
+listbox.xview_scroll(5, "pages")
 listbox.yview_scroll(3, "pages")
-scrollbar.config(command=listbox.yview)
+scrollbarv.config(command=listbox.yview)
+scrollbarh.config(command=listbox.xview)
 listbox.grid(row=0, column=0, columnspan=3)
-scrollbar.grid(row=0, column=3, sticky=E, ipady=345)
+scrollbarv.grid(row=0, column=3, sticky=E, ipady=345)
+scrollbarh.grid(row=1, column=0, columnspan=3, sticky=S, ipadx=280)
 
 # Variables
 array,playlist,MODES = [],[],[]
@@ -88,9 +93,10 @@ def browse():
                 if os.path.isfile(os.path.join(en.get(), filename)):
                     playlist.append(os.path.join(en.get(), filename))
         lb("Total no of Files: "+str(len(playlist)))
+        lb("")
     except FileNotFoundError:
         lb("Error: Directory not selected")
-    lb("")
+        lb("")
 
 def openfolder():
     if en.get():
@@ -98,24 +104,28 @@ def openfolder():
             path = 'nautilus "%s"' %en.get()
             subprocess.Popen(path, shell=True)
             lb("Directory opened: "+en.get())
+            lb("")
         else:
             lb("Error: Directory does not exists")
+            lb("")
     else:
         lb("Error: Directory not selected")
-    lb("")
+        lb("")
 
 def ls_dir():
     if en.get():
         count = [name for name in os.listdir(en.get()) if os.path.isfile(os.path.join(en.get(), name))]
         if (len(count)==0):
             lb("Error: No Files in Directory")
+            lb("")
         else:
             lb("File List:")
             for i in range(len(count)):
                 lb(str(i+1)+ ". " + count[i] + " " + "["+ filesize(en.get()+"/"+count[i]) + "MB" + "]")
+            lb("")
     else:
         lb("Error: Directory not selected")
-    lb("")
+        lb("")
 
 def stats():
     try:
@@ -140,7 +150,7 @@ def play(delta):
         current += delta
         song = 'vlc -q "%s" 2> /dev/null' %playlist[current]
         if os.path.isfile(playlist[current]):
-            lb(str(current+1)+": "+"VLC: "+playlist[current]+ " " + "["+ filesize(playlist[current]) + "MB" + "]")
+            lb(str(current+1)+": "+"vlc: "+(playlist[current]).split('/')[-1]+ " " + "["+ filesize(playlist[current]) + "MB" + "]")
             bar['value'] = int((current/len(playlist))*100)
             subprocess.Popen(song, shell=True)
         else:
@@ -169,8 +179,10 @@ def move(mode):
                             lb("Info: Directory moved: "+en.get()+" => "+mode)
                         except shutil.Error:
                             lb("Error: "+en.get()+": already exists at destination: "+mode)
+                            lb("")
                     else:
                         lb("Info: Operation to delete all files cancelled")
+                        lb("")
                 else:
                     try:
                         if os.path.isfile(playlist[current]):
@@ -179,27 +191,32 @@ def move(mode):
                             shutil.move(playlist[current], mode)
                             orig_file = playlist[current]
                             new_path = mode
-                            lb("Moved: "+playlist[current]+" => "+mode)
-                            lb("")
+                            lb("Moved: "+(playlist[current]).split('/')[-1]+" => "+mode)
+                            #lb("")
                             frame.config(cursor="")
                             global m
                             m += 1
                             play(+1)
                         else:
                             lb("Error: Source file does not exist: "+(playlist[current]).split('/')[-1])
+                            lb("")
                     except shutil.Error:
                         lb("Error: "+(playlist[current]).split('/')[-1]+": already exists at destination: "+mode)
+                        lb("")
                         frame.config(cursor="")
                     except FileNotFoundError:
                         lb("Error: File not found: "+(playlist[current]).split('/')[-1])
+                        lb("")
                         frame.config(cursor="")
             else:
                 lb("Error: Directory does not exist: "+mode)
+                lb("")
         except NameError:
             lb("Error: Directory is empty or invalid")
+            lb("")
     else:
         lb("Error: Directory not selected")
-    lb("")
+        lb("")
 
 def moveto():
     global orig_file
@@ -227,10 +244,13 @@ def moveto():
                             new_path = mvdir
                             frame.config(cursor="")
                             lb("Info: Directory moved: "+en.get()+" => "+mvdir)
+                            lb("")
                         except shutil.Error:
                             lb("Error: "+en.get()+": already exists at destination: "+mvdir)
+                            lb("")
                     else:
                         lb("Info: Operation to delete all files cancelled")
+                        lb("")
                 else:
                     try:
                         if os.path.isfile(playlist[current]):
@@ -240,31 +260,38 @@ def moveto():
                             orig_file = playlist[current]
                             new_path = mvdir
                             lb("Moved: "+playlist[current]+" => "+mvdir)
-                            lb("")
+                            #lb("")
                             frame.config(cursor="")
                             global m
                             m += 1
                             play(+1)
                         else:
                             lb("Error: Source file does not exist: "+(playlist[current]).split('/')[-1])
+                            lb("")
                     except shutil.Error:
                         lb("Error: "+(playlist[current]).split('/')[-1]+": already exists at destination: "+mvdir)
+                        lb("")
                         frame.config(cursor="")
                     except FileNotFoundError:
                         lb("Error: File not found: "+(playlist[current]).split('/')[-1])
+                        lb("")
                         frame.config(cursor="")
                     except IndexError:
                         lb("Error: No file in Directory: " + en.get())
+                        lb("")
                         frame.config(cursor="")
             else:
                 lb("Error: Directory does not exist: "+mvdir)
+                lb("")
         except TypeError:
             lb("Info: Move Directory operation cancelled by User")
+            lb("")
         except NameError:
             lb("Error: Directory is empty or invalid")
+            lb("")
     else:
         lb("Error: Directory not selected")
-    lb("")
+        lb("")
 
 def delete():
     if en.get():
@@ -272,17 +299,19 @@ def delete():
             if os.path.isfile(playlist[current]):
                 send2trash(playlist[current])
                 lb("Deleted: "+playlist[current])
-                lb("")
+                #lb("")
                 global d
                 d += 1
                 play(+1)
             else:
                 lb("Error: File not found/moved/already deleted:" + playlist[current])
+                lb("")
         except NameError:
             lb("Error: Directory does not exist or not selected")
+            lb("")
     else:
         lb("Error: Directory not selected")
-    lb("")
+        lb("")
 
 def deleteall():
     if en.get():
@@ -297,11 +326,13 @@ def deleteall():
                      d += 1
                  except:
                      lb(" -  "+"Already Deleted: "+playlist[i])
+                     lb("")
         else:
             lb("Info: Operation to delete all files cancelled")
+            lb("")
     else:
         lb("Error: Directory not selected")
-    lb("")
+        lb("")
 
 def del_dir():
     if en.get():
@@ -311,11 +342,13 @@ def del_dir():
                 lb("Directory Deleted: "+ en.get())
             else:
                 lb("Directory not empty: Contains "+ str(len(os.listdir(en.get()))) + " files")
+                lb("")
         except FileNotFoundError:
             lb("Error: Directory not found, probably already deleted")
+            lb("")
     else:
         lb("Error: Directory not selected")
-    lb("")
+        lb("")
 
 def clear():
     listbox.delete(0, END)
@@ -336,10 +369,18 @@ def vmode(delta):
     v.set(MODES[curr][1])
 
 def restart():
-    root.update()
+    python = sys.executable
+    os.execl(python, python, * sys.argv)
 
-# orig_file: /home/aman/Desktop/test/python2.py
-# new_path: /home/aman/Desktop/test2/
+def empty_folder_del():
+    if en.get():
+        deleted_dir = os.popen('find /data/.folder/ -type d -empty -print -delete')
+        lb(("Deleted:", deleted_dir.readlines()))
+        lb("")
+    else:
+        lb("Error: Directory not selected")
+        lb("")
+
 def undo():
     try:
         name = orig_file.split('/')[-1]
@@ -349,12 +390,16 @@ def undo():
             if os.path.isdir(orig_dir):
                 shutil.move(path,orig_dir)
                 lb("Undo: Moved file: "+name+" to Dir "+orig_dir)
+                lb("")
             else:
                 lb("Error: Source Dir does not exist: "+ orig_dir)
+                lb("")
         else:
             lb("Error: File not found: "+ name + "in Dir: " + path)
+            lb("")
     except NameError:
         lb("Error: No file moved, Cannot use Undo function")
+        lb("")
 
 # Keyboard Binding related functions
 def playnext(event):
@@ -389,9 +434,9 @@ def about():
     win2.attributes('-topmost','true')
     win2.title("About")
 
-    frame4 = Frame(win2, height=100, width=300, bd=3, relief=GROOVE)
-    frame4.grid()
-    Button(frame4, text="Visit Project Page", command=page).grid(row=0, sticky=W)
+    frame5 = Frame(win2, height=100, width=300, bd=3, relief=GROOVE)
+    frame5.grid()
+    Button(frame5, text="Visit Project Page", command=page).grid(row=0, sticky=W)
 
 
 #Save Directory list Section
@@ -455,10 +500,12 @@ def save():
         f.write(en2.get()+"\t"+en3.get()+"\r")
         f.close()
         lb("Info: Dirlist.ini Entry saved => "+en2.get()+" - "+en3.get()+"; Restart the App to load Directories")
+        lb("")
         win1.destroy()
         dirlist()
     else:
         messagebox.showerror('Empty','Please Enter data in both columns', parent=frame4)
+        lb("")
 
 # Menu Configuration
 menu = Menu(frame)
@@ -475,6 +522,7 @@ item2.add_command(label='Edit Dirlist', command=dirlist)
 item2.add_separator()
 item2.add_command(label='Delete All', command=deleteall)
 item2.add_command(label='Delete Dir', command=del_dir)
+item2.add_command(label='Delete Empty Dir', command=empty_folder_del)
 
 item3 = Menu(menu, tearoff=0)
 item3.add_command(label='List Files', command=ls_dir)
@@ -517,9 +565,11 @@ try:
         i += 1
 except ValueError:
     lb("Error: Data in Dirlist.ini not correctly formatted")
+    lb("")
 
 if i==0:
     lb("Error: No Directories found in Dirlist.ini")
+    lb("")
 
 # Buttons with Directory operations
 if i <= l:
@@ -530,18 +580,18 @@ else:
     Button(frame3, text='Delete (X)', command=lambda: delete(), width=10, fg="red").grid(row=k+1, column=j+1)
 
 lb("Ready, Log Output:")
-lb("")
+#lb("")
 
 # Progress Bar
 bar = ttk.Progressbar(frame2, length=430)
-bar.grid(row=1,column=0)
+bar.grid(row=2,column=0)
 
 # Move Dir Checkbox
 var = IntVar()
-Checkbutton(frame2, text="Move Dir", variable=var).grid(row=1, column=1)
+Checkbutton(frame2, text="Move Dir", variable=var).grid(row=2, column=1)
 
 # Undo Button
-Button(frame2, text="Undo", command=undo).grid(row=1, column=2)
+Button(frame2, text="Undo", command=undo).grid(row=2, column=2)
 
 # Validate Directories
 try:
@@ -550,7 +600,7 @@ try:
             pass
         else:
             lb("Error: Directory does not exist: "+MODES[k][0]+" - "+MODES[k][1])
-    lb("")
+            lb("")
 except:
     pass
 
@@ -567,5 +617,6 @@ try:
     root.tk.call('wm', 'iconphoto', root._w, img)
 except:
     lb("Error: icon.png file not found")
+    lb("")
 
 root.mainloop()
