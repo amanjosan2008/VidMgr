@@ -135,7 +135,8 @@ def play(delta):
             lb("")
             return
         current += delta
-        song = 'vlc -q "%s" 2> /dev/null' %playlist[current]
+        #song = 'vlc -q "%s" 2> /dev/null' %playlist[current]
+        song = 'cvlc --play-and-exit "%s" 2> /dev/null' %playlist[current]
         if os.path.isfile(playlist[current]):
             #lb(str(current+1)+": "+"vlc: "+(playlist[current]).split('/')[-1]+ " " + "["+ filesize(playlist[current]) + "MB" + "]")
             st = str(current+1)+": "+"vlc: "+(playlist[current]).split('/')[-1]+ " " + "["+ filesize(playlist[current]) + "MB" + "]"
