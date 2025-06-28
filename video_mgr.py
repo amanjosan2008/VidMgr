@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 # Integrate VLC Window in main Window
-# Undo Button for Deleted Files
 # Memory save last location...... Dirlist - Browse
-# Delete Empty Folders Function update
 # Delete Dir Entry no feedback
 
 # Dependencies:
@@ -36,8 +34,12 @@ frame2 = Frame(frame, height=300, width=400, bd=3, relief=GROOVE)
 frame2.grid(row=1, column=0, sticky=N)
 
 # For Right side Buttons ###init 100
-frame3 = Frame(frame, height=300, width=100, bd=3, relief=GROOVE)
+frame3 = Frame(frame, height=300, width=100, bd=3, relief=SUNKEN)
 frame3.grid(row=0, column=1, rowspan=2, sticky=N)
+
+# For Right side Buttons ###init 100
+frame4 = Frame(frame, height=300, width=100, bd=3, relief=GROOVE)
+frame4.grid(row=0, column=2, rowspan=2, sticky=N)
 
 # Output Logs Box
 scrollbarv = Scrollbar(frame2, orient=VERTICAL, cursor='sb_v_double_arrow')
@@ -58,15 +60,14 @@ loc_mem = 0
 loc_mem2 = 0
 
 # Populate Directory List
+'''
 try:
     array = [line.rstrip('\n') for line in open('dirlist.ini')]
 except FileNotFoundError:
-    '''print("Error: dirlist.ini not found. Please create the file.")
-    sys.exit()'''
+    #print("Error: dirlist.ini not found. Please create the file.")
+    #sys.exit()
     lb("Error: dirlist.ini not found. Please create the file.")
-
-for i in range(len(array)):
-    MODES.append(array[i].split(';'))
+'''
 
 def filesize(file):
     size = os.path.getsize(file)
@@ -537,7 +538,7 @@ menu = Menu(frame)
 
 item1 = Menu(menu, tearoff=0)
 item1.add_command(label='Browse', command=browse)
-item1.add_command(label='Explore', command=openfolder)
+item1.add_command(label='Open Dir', command=openfolder)
 item1.add_separator()
 item1.add_command(label='Restart', command=restart)
 item1.add_command(label='Exit', command=exit)
@@ -576,22 +577,40 @@ en.grid(row=0, column=3, columnspan=4, sticky=W, ipadx=90)
 
 # Directory buttons
 v = StringVar()
+'''
+l = 27   # no of buttons for next column
+for i in range(len(array)):
+    MODES.append(array[i].split(';'))
+'''
 
 i = 0    # no of Row for the buttons in column no 4
 j = 4    # no of Column (4 or 5)
-#k = 0    # no of Row for the buttons in column no 5
-l = 27   # no of buttons for next column
-#m = 0    # no of Row for the buttons in column no 6
 
+with open('dirlist.ini') as my_file:
+    array = my_file.readlines()
+        
 try:
-    for text, mode in MODES:
-        b = Button(frame3, text=text, textvariable=mode, command=lambda mode=mode: move(mode), width=10)
-        b.grid(row=i, column=j, sticky=W)
-        if i > l:
-            j += 1
+    for array_line in array:
+        array_info = array_line.strip()
+        if array_info == 'NEXT':
+            j = j+1
             i = 0
-            b.grid(row=i, column=j, sticky=W)
-        i += 1
+        else:
+            text,mode = array_info.split(';')
+
+            if j <= 8:
+                b = Button(frame3, text=text, textvariable=mode, command=lambda mode=mode: move(mode), width=10)
+                b.grid(row=i, column=j, sticky=W)
+                
+            else:
+                b = Button(frame4, text=text, textvariable=mode, command=lambda mode=mode: move(mode), width=10)
+                b.grid(row=i, column=j, sticky=W)
+            
+            # Validate Directories & disable button if not present
+            if not os.path.exists(mode):
+                lb("Dir not found: "+ text +" - "+ mode)
+                b.config(state=DISABLED)
+            i += 1
 except ValueError:
     lb("Error: Data in Dirlist.ini not correctly formatted")
     lb("")
@@ -600,22 +619,20 @@ if i==0:
     lb("Error: No Directories found in Dirlist.ini")
     lb("")
 
-# Buttons with Directory operations
 '''
-if i <= l:
-    Button(frame3, text='Move to ..', command=moveto, width=10).grid(row=i+1)
-    Button(frame3, text='Delete (X)', command=lambda: delete(), width=10, fg="red").grid(row=i+2)
-elif i > l:
-    if i > (l*2):
-        Button(frame3, text='Move to ..', command=moveto, width=10).grid(row=m, column=j+2)
-        Button(frame3, text='Delete (X)', command=lambda: delete(), width=10, fg="red").grid(row=m+1, column=j+2)
-    else:
-        Button(frame3, text='Move to ..', command=moveto, width=10).grid(row=k, column=j+1)
-        Button(frame3, text='Delete (X)', command=lambda: delete(), width=10, fg="red").grid(row=k+1, column=j+1)
-'''
+# Validate Directories
+try:
+    for k in range(len(MODES)):
+        if os.path.exists(MODES[k][1]):
+            pass
+        else:
+            lb("Error: Directory does not exist: "+MODES[k][0]+" - "+MODES[k][1])
+            lb("")
+except:
+    pass'''
 
-Button(frame3, text='Move to ..', command=moveto, width=10).grid(row=i, column=j)
-Button(frame3, text='Delete (X)', command=lambda: delete(), width=10, fg="red").grid(row=i+1, column=j)
+Button(frame4, text='Move to ..', command=moveto, width=10).grid(row=i, column=j)
+Button(frame4, text='Delete (X)', command=lambda: delete(), width=10, fg="red").grid(row=i+1, column=j)
 
 lb("Ready, Log Output:")
 #lb("")
@@ -631,16 +648,7 @@ Checkbutton(frame2, text="Move Dir", variable=var).grid(row=2, column=1)
 # Undo Button
 Button(frame2, text="Undo", command=undo).grid(row=2, column=2)
 
-# Validate Directories
-try:
-    for k in range(len(MODES)):
-        if os.path.exists(MODES[k][1]):
-            pass
-        else:
-            lb("Error: Directory does not exist: "+MODES[k][0]+" - "+MODES[k][1])
-            lb("")
-except:
-    pass
+
 
 root.title("Video Collection Manager")
 root.bind('<Return>', playcurr)
