@@ -5,4 +5,4 @@ browse = '/data2/Vids/'
 browse2 = '/data2/Pics/'
 
 # Move to Dir function default dir 
-moveto = '/data2/Dir/'
+#moveto = '/data2/Dir/'
