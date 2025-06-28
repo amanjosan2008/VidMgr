@@ -3,6 +3,10 @@
 # Undo Button for Deleted Files
 # Memory save last location...... Dirlist - Browse
 # Delete Empty Folders Function update
+# Delete Dir Entry no feedback
+
+# Dependencies:
+##sudo pip3 install psutil --break-system-packages
 
 import os
 import sys
@@ -16,9 +20,10 @@ import psutil
 import webbrowser
 import path
 
+
 root = Tk()
 
-# Main Frame
+# Main Frame ###init 700
 frame = Frame(root, height=800, width=700, bd=3, relief=RIDGE)
 frame.grid()
 
@@ -30,7 +35,7 @@ frame1.grid(row=0, column=0, columnspan=2, sticky=NW)
 frame2 = Frame(frame, height=300, width=400, bd=3, relief=GROOVE)
 frame2.grid(row=1, column=0, sticky=N)
 
-# For Right side Buttons
+# For Right side Buttons ###init 100
 frame3 = Frame(frame, height=300, width=100, bd=3, relief=GROOVE)
 frame3.grid(row=0, column=1, rowspan=2, sticky=N)
 
@@ -56,11 +61,12 @@ loc_mem2 = 0
 try:
     array = [line.rstrip('\n') for line in open('dirlist.ini')]
 except FileNotFoundError:
-    print("Error: dirlist.ini not found. Please create the file.")
-    sys.exit()
+    '''print("Error: dirlist.ini not found. Please create the file.")
+    sys.exit()'''
+    lb("Error: dirlist.ini not found. Please create the file.")
 
 for i in range(len(array)):
-    MODES.append(array[i].split('\t'))
+    MODES.append(array[i].split(';'))
 
 def filesize(file):
     size = os.path.getsize(file)
@@ -98,6 +104,28 @@ def browse():
         lb("Error: Directory not selected")
         lb("")
 
+def top():
+    lb("Fn Under Construction")
+    try:
+        global playlist, current, d, m
+        playlist = []
+        temp_pl = {}
+        for root,dire,filelist in os.walk(en.get()):
+                for filename in filelist:
+                    filepath = os.path.join(root, filename)
+                    filesize = os.path.getsize(filepath)
+                    temp_pl.update({filepath:filesize})
+        pl = sorted([(v, k) for k, v in temp_pl.items()], reverse=True)[0:10]
+        for l in pl:
+            lb("File: " + str(l[1]) + " [" + str(round(l[0]/(1024*1024))) + "MB]")
+            playlist.append(l[1])
+        lb("Total no of Files: " + str(len(playlist)))
+        lb("playlist")
+    except FileNotFoundError:
+        lb("Error: Directory not selected")
+        lb("")
+
+
 def openfolder():
     if en.get():
         if os.path.isdir(en.get()):
@@ -121,7 +149,7 @@ def ls_dir():
         else:
             lb("File List:")
             for i in range(len(count)):
-                lb(str(i+1)+ ". " + count[i] + " " + "["+ filesize(en.get()+"/"+count[i]) + "MB" + "]")
+                lb(str(i+1)+ ". " + count[i] + " ["+ filesize(en.get()+"/"+count[i]) + "MB]")
             lb("")
     else:
         lb("Error: Directory not selected")
@@ -414,9 +442,6 @@ def playcurr(event):
 def br(event):
     browse()
 
-#def mv(event):
-#    moveto()
-
 def delt(event):
     delete()
 
@@ -456,7 +481,7 @@ def dirlist():
     l = f.readlines()
     j = 1
     for i in l:
-        x = i.split('\t')
+        x = i.split(';')
         Button(frame4, width=30, text=x[0], relief=SUNKEN).grid(row=j, column=0, sticky=W)
         Button(frame4, width=60, text=x[1].rstrip(), relief=SUNKEN).grid(row=j, column=1, columnspan=2, sticky=W)
         Button(frame4, width=5, text="Del", command=lambda j=j-1: delentry(j)).grid(row=j, column=3, sticky=W)
@@ -497,7 +522,7 @@ def browse2():
 def save():
     if en2.get() and en3.get():
         f = open('dirlist.ini','a')
-        f.write(en2.get()+"\t"+en3.get()+"\r")
+        f.write(en2.get()+";"+en3.get()+"\r")
         f.close()
         lb("Info: Dirlist.ini Entry saved => "+en2.get()+" - "+en3.get()+"; Restart the App to load Directories")
         lb("")
@@ -526,6 +551,7 @@ item2.add_command(label='Delete Empty Dir', command=empty_folder_del)
 
 item3 = Menu(menu, tearoff=0)
 item3.add_command(label='List Files', command=ls_dir)
+item3.add_command(label='Top10 Files', command=top)
 item3.add_command(label='Stats', command=stats)
 item3.add_command(label='Clear Logs', command=clear)
 
@@ -553,15 +579,18 @@ v = StringVar()
 
 i = 0    # no of Row for the buttons in column no 4
 j = 4    # no of Column (4 or 5)
-k = 0    # no of Row for the buttons in column no 5
-l = 25   # no of buttons for next column
+#k = 0    # no of Row for the buttons in column no 5
+l = 27   # no of buttons for next column
+#m = 0    # no of Row for the buttons in column no 6
+
 try:
     for text, mode in MODES:
         b = Button(frame3, text=text, textvariable=mode, command=lambda mode=mode: move(mode), width=10)
         b.grid(row=i, column=j, sticky=W)
         if i > l:
-            b.grid(row=k, column=j+1, sticky=W)
-            k += 1
+            j += 1
+            i = 0
+            b.grid(row=i, column=j, sticky=W)
         i += 1
 except ValueError:
     lb("Error: Data in Dirlist.ini not correctly formatted")
@@ -572,12 +601,21 @@ if i==0:
     lb("")
 
 # Buttons with Directory operations
+'''
 if i <= l:
     Button(frame3, text='Move to ..', command=moveto, width=10).grid(row=i+1)
     Button(frame3, text='Delete (X)', command=lambda: delete(), width=10, fg="red").grid(row=i+2)
-else:
-    Button(frame3, text='Move to ..', command=moveto, width=10).grid(row=k, column=j+1)
-    Button(frame3, text='Delete (X)', command=lambda: delete(), width=10, fg="red").grid(row=k+1, column=j+1)
+elif i > l:
+    if i > (l*2):
+        Button(frame3, text='Move to ..', command=moveto, width=10).grid(row=m, column=j+2)
+        Button(frame3, text='Delete (X)', command=lambda: delete(), width=10, fg="red").grid(row=m+1, column=j+2)
+    else:
+        Button(frame3, text='Move to ..', command=moveto, width=10).grid(row=k, column=j+1)
+        Button(frame3, text='Delete (X)', command=lambda: delete(), width=10, fg="red").grid(row=k+1, column=j+1)
+'''
+
+Button(frame3, text='Move to ..', command=moveto, width=10).grid(row=i, column=j)
+Button(frame3, text='Delete (X)', command=lambda: delete(), width=10, fg="red").grid(row=i+1, column=j)
 
 lb("Ready, Log Output:")
 #lb("")
