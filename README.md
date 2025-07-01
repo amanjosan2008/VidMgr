@@ -15,3 +15,6 @@
 
 Pending Actions List:
  - Integrate VLC Window in the Main program window
+
+Dependencies:
+ - sudo pip3 install psutil --break-system-packages
