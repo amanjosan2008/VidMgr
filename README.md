@@ -5,9 +5,6 @@
  - Play Video files one by one from a Directory.
  - Move selected Video to a selected Directory from a list.
  - Delete selected Video file.
- - Delete All files from a directory.
- - Display Stats about the operations.
- - Manage the list of Directories to move the files.
 
 
 ![](main.png)
