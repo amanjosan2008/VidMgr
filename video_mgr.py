@@ -1,11 +1,4 @@
 #!/usr/bin/env python3
-# Integrate VLC Window in main Window
-# Memory save last location...... Dirlist - Browse
-# Delete Dir Entry no feedback
-
-# Dependencies:
-##sudo pip3 install psutil --break-system-packages
-
 import os
 import sys
 import time
@@ -16,8 +9,6 @@ import shutil
 from send2trash import send2trash
 import psutil
 import webbrowser
-import path
-
 
 root = Tk()
 
@@ -62,6 +53,7 @@ array,playlist,MODES = [],[],[]
 curr = 0
 loc_mem = 0
 loc_mem2 = 0
+browse_path = '/mnt/system/aman32/.folder/Others/Vids'
 
 def filesize(file):
     size = os.path.getsize(file)
@@ -84,7 +76,7 @@ def browse():
             if loc_mem:
                 dir = filedialog.askdirectory(parent=frame, initialdir=loc_mem, title='Please select a directory')
             else:
-                dir = filedialog.askdirectory(parent=frame1, initialdir=path.browse, title='Please select a directory')
+                dir = filedialog.askdirectory(parent=frame1, initialdir=browse_path, title='Please select a directory')
         except:
             dir = filedialog.askdirectory(parent=frame1, initialdir=os.getcwd(), title='Please select a directory')
         loc_mem = dir
@@ -136,11 +128,14 @@ def play(delta):
             return
         current += delta
         #song = 'vlc -q "%s" 2> /dev/null' %playlist[current]
+        #song = 'cvlc --play-and-exit "%s" 2> /dev/null' %playlist[current]
+        kv = 'killall -9 cvlc 2> /dev/null && killall -9 vlc 2> /dev/null'
         song = 'cvlc --play-and-exit "%s" 2> /dev/null' %playlist[current]
         if os.path.isfile(playlist[current]):
             #lb(str(current+1)+": "+"vlc: "+(playlist[current]).split('/')[-1]+ " " + "["+ filesize(playlist[current]) + "MB" + "]")
             st = str(current+1)+": "+"vlc: "+(playlist[current]).split('/')[-1]+ " " + "["+ filesize(playlist[current]) + "MB" + "]"
             statusbar.config(text=st)
+            subprocess.Popen(kv, shell=True)
             subprocess.Popen(song, shell=True)
         else:
             lb("Error: File not found: "+(playlist[current]).split('/')[-1])
