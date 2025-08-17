@@ -9,10 +9,16 @@ import shutil
 from send2trash import send2trash
 import psutil
 import webbrowser
+import logging
+
+# Logging setup
+LOG_FILE = "activity.log"
+logging.basicConfig(filename=LOG_FILE, level=logging.INFO, format='%(asctime)s - %(message)s')
+logging.getLogger('fsspec.implementations.sftp').setLevel(logging.CRITICAL+1)
 
 root = Tk()
 
-# Main Frame ###init 700
+# Main Frame
 frame = Frame(root, height=800, width=700, bd=3, relief=RIDGE)
 frame.grid()
 
@@ -86,6 +92,7 @@ def browse():
                 if os.path.isfile(os.path.join(en.get(), filename)):
                     playlist.append(os.path.join(en.get(), filename))
         statusbar.config(text="Total no of Files: "+str(len(playlist)))
+        lb("Total no of Files: "+str(len(playlist)))
     except FileNotFoundError:
         lb("Error: Directory not selected")
         lb("")
@@ -127,15 +134,11 @@ def play(delta):
             lb("")
             return
         current += delta
-        #song = 'vlc -q "%s" 2> /dev/null' %playlist[current]
+        song = 'vlc -q "%s" 2> /dev/null' %playlist[current]
         #song = 'cvlc --play-and-exit "%s" 2> /dev/null' %playlist[current]
-        kv = 'killall -9 cvlc 2> /dev/null && killall -9 vlc 2> /dev/null'
-        song = 'cvlc --play-and-exit "%s" 2> /dev/null' %playlist[current]
         if os.path.isfile(playlist[current]):
-            #lb(str(current+1)+": "+"vlc: "+(playlist[current]).split('/')[-1]+ " " + "["+ filesize(playlist[current]) + "MB" + "]")
-            st = str(current+1)+": "+"vlc: "+(playlist[current]).split('/')[-1]+ " " + "["+ filesize(playlist[current]) + "MB" + "]"
+            st = str(current+1)+"/" + str(len(playlist)) + " : "+"vlc: "+(playlist[current]).split('/')[-1]+ " " + "["+ filesize(playlist[current]) + "MB" + "]"
             statusbar.config(text=st)
-            subprocess.Popen(kv, shell=True)
             subprocess.Popen(song, shell=True)
         else:
             lb("Error: File not found: "+(playlist[current]).split('/')[-1])
@@ -158,6 +161,7 @@ def move(mode):
                         orig_file = playlist[current]
                         new_path = mode
                         lb("Moved: "+(playlist[current]).split('/')[-1]+" => "+mode)
+                        logging.info(f"Moved: {playlist[current]} => {mode}")
                         #lb("")
                         frame.config(cursor="")
                         play(+1)
@@ -187,16 +191,6 @@ def moveto(loc_mem2):
     global new_path
     if en.get():
         try:
-            '''
-            try:
-                if loc_mem2:
-                    mvdir = filedialog.askdirectory(parent=frame, initialdir=loc_mem2, title='Please select a directory')
-                else:
-                    mvdir = filedialog.askdirectory(parent=frame, initialdir=path.moveto, title='Please select a directory')
-            except:
-                mvdir = filedialog.askdirectory(parent=frame, initialdir=os.getcwd(), title='Please select a directory')
-            loc_mem2 = mvdir
-            '''
             mvdir = filedialog.askdirectory(parent=frame, initialdir=loc_mem2, title='Please select a directory')
             if os.path.isdir(mvdir):
                 try:
@@ -207,6 +201,7 @@ def moveto(loc_mem2):
                         orig_file = playlist[current]
                         new_path = mvdir
                         lb("Moved: "+playlist[current]+" => "+mvdir)
+                        logging.info(f"Moved: {playlist[current]} => {mvdir}")
                         #lb("")
                         frame.config(cursor="")
                         play(+1)
@@ -244,6 +239,7 @@ def delete():
             if os.path.isfile(playlist[current]):
                 send2trash(playlist[current])
                 lb("Deleted: "+playlist[current])
+                logging.info(f"Deleted: {playlist[current]}")
                 #lb("")
                 play(+1)
             else:
@@ -285,6 +281,7 @@ def undo():
                 shutil.move(path,orig_dir)
                 lb("Undo: Moved file: "+name+" to Dir "+orig_dir)
                 lb("")
+                logging.info(f"Undo: Moved file: '{name}' to Dir '{orig_dir}'")
             else:
                 lb("Error: Source Dir does not exist: "+ orig_dir)
                 lb("")
@@ -316,7 +313,12 @@ def modeup(event):
 
 def modedown(event):
     vmode(+1)
-    
+
+def on_shift_click(event,sel_path):
+    if event.state & 0x0001:  # Shift key is pressed (bitmask check)
+        moveto(sel_path)
+    else:
+        move(sel_path)
 
 # Menu Configuration
 menu = Menu(frame)
@@ -365,16 +367,23 @@ try:
             if j <= 8:
                 if text == 'MOVETO':
                     b = Button(frame3, text=text, textvariable=mode, command=lambda mode=mode: moveto(mode), width=10)
+                    b.grid(row=i, column=j, sticky=W)
                 else:
-                    b = Button(frame3, text=text, textvariable=mode, command=lambda mode=mode: move(mode), width=10)
-                b.grid(row=i, column=j, sticky=W)
+                    #b = Button(frame3, text=text, textvariable=mode, command=lambda mode=mode: move(mode), width=10)
+                    b = Button(frame3, text=text, textvariable=mode, width=10)
+                    b.grid(row=i, column=j, sticky=W)
+                    b.bind("<Button-1>", lambda ev, mode=mode: on_shift_click(ev, mode))
+                
             else:
                 if text == 'MOVETO':
                     b = Button(frame4, text=text, textvariable=mode, command=lambda mode=mode: moveto(mode), width=10)
+                    b.grid(row=i, column=j, sticky=W)
                 else:
-                    b = Button(frame4, text=text, textvariable=mode, command=lambda mode=mode: move(mode), width=10)
-                b.grid(row=i, column=j, sticky=W)
-            
+                    #b = Button(frame4, text=text, textvariable=mode, command=lambda mode=mode: move(mode), width=10)
+                    b = Button(frame4, text=text, textvariable=mode, width=10)
+                    b.grid(row=i, column=j, sticky=W)
+                    b.bind("<Button-1>", lambda ev, mode=mode: on_shift_click(ev, mode))
+
             # Validate Directories & disable button if not present
             if not os.path.exists(mode):
                 lb("Dir not found: "+ text +" - "+ mode)
